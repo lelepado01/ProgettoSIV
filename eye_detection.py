@@ -90,7 +90,7 @@ hog = cv2.HOGDescriptor()
 hog.setSVMDetector( cv2.HOGDescriptor_getDefaultPeopleDetector() )
 
 
-img = cv2.imread("imgs/class3.jpg");  
+img = cv2.imread("imgs/rseba1.jpg");  
 
 #Converting the recorded image to grayscale
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
