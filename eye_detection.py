@@ -2,6 +2,13 @@ import numpy as np
 import cv2 
 from math import sqrt
 
+#Initializing the face and eye cascade classifiers from xml files
+face_cascade = cv2.CascadeClassifier('face.xml')
+eye_cascade = cv2.CascadeClassifier('eye.xml')
+
+hog = cv2.HOGDescriptor()
+hog.setSVMDetector( cv2.HOGDescriptor_getDefaultPeopleDetector() )
+
 
 def getLeftAndRightEye(eyes): 
     (e1x, _, _, _) = eyes[0]
@@ -82,42 +89,69 @@ def drawLookDirectionOnImage(img, left, right, face, global_angle, relative_angl
 
     return img
 
-#Initializing the face and eye cascade classifiers from xml files
-face_cascade = cv2.CascadeClassifier('face.xml')
-eye_cascade = cv2.CascadeClassifier('eye.xml')
+def get_bodies(img): 
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.bilateralFilter(gray,5,1,1)
+    bodies, _ = hog.detectMultiScale(gray, winStride=(8,8), padding=(32,32), scale=1.05)
+    return bodies
 
-hog = cv2.HOGDescriptor()
-hog.setSVMDetector( cv2.HOGDescriptor_getDefaultPeopleDetector() )
+def get_faces(img, body): 
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.bilateralFilter(gray,5,1,1)
+
+    x,y,w,h = body
+    body_zoom = gray[y:y+h, x:x+w]
+
+    return face_cascade.detectMultiScale(body_zoom, 1.3, 5,minSize=(1,1))
 
 
-img = cv2.imread("imgs/rseba1.jpg");  
+def get_eyes(img, face): 
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.bilateralFilter(gray,5,1,1)
 
-#Converting the recorded image to grayscale
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-#Applying filter to remove impurities
-gray = cv2.bilateralFilter(gray,5,1,1)
-
-faces = face_cascade.detectMultiScale(gray, 1.3, 5,minSize=(1,1))
-for face in faces:
     (x,y,w,h) = face
     face_zoom = img[y:y+h, x:x+w]
-    eyes = eye_cascade.detectMultiScale(face_zoom,1.3,5,minSize=(1,1))
+    return eye_cascade.detectMultiScale(face_zoom,1.3,5,minSize=(1,1))
 
+
+img = cv2.imread("imgs/class3.jpg");  
+width = len(img[0])
+height = len(img)
+
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+gray = cv2.bilateralFilter(gray,5,1,1)
+
+# bodies = get_bodies(img)
+# for body in bodies:
+#     faces = get_faces(img, body)
+#     for face in faces:
+#         eyes = get_eyes(img, face)
+#         if (len(eyes) == 2): 
+#             left_eye, right_eye = getLeftAndRightEye(eyes)
+#             global_angle, relative_angle = getFaceAngleFromEyes(left_eye, right_eye, face)
+#             img = drawLookDirectionOnImage(img, left_eye, right_eye, face, global_angle, relative_angle)
+
+# bodies, _ = hog.detectMultiScale(gray, winStride=(8,8), padding=(32,32), scale=1.05)
+# for (x,y,w,h) in bodies:
+#     img = cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
+
+# faces = face_cascade.detectMultiScale(gray, 1.3, 5,minSize=(1,1))
+# for (x,y,w,h) in faces:
+#     img = cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2)
+
+# eyes = eye_cascade.detectMultiScale(gray, 1.3, 5,minSize=(1,1))
+# for (x,y,w,h) in eyes:
+#     img = cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+
+
+faces = get_faces(img, (0,0,width,height))
+for face in faces:
+    eyes = get_eyes(img, face)
     if (len(eyes) == 2): 
         left_eye, right_eye = getLeftAndRightEye(eyes)
         global_angle, relative_angle = getFaceAngleFromEyes(left_eye, right_eye, face)
         img = drawLookDirectionOnImage(img, left_eye, right_eye, face, global_angle, relative_angle)
 
-bodies, _ = hog.detectMultiScale(img, winStride=(8,8), padding=(32,32), scale=1.05)
-if len(bodies) > 0: 
-    for (x,y,w,h) in bodies:
-        img = cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-
-faces = face_cascade.detectMultiScale(gray, 1.3, 5,minSize=(1,1))
-if(len(faces)>0):
-    for (x,y,w,h) in faces:
-        img = cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2)
-        
 img = cv2.resize(img, (1080, 720))
 cv2.imshow('img',img)
 cv2.waitKey(0)
