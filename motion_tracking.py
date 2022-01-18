@@ -1,11 +1,9 @@
 
-from signal import pause
 import numpy as np
 import cv2
-from cv2 import TrackerKCF_create
   
-cap = cv2.VideoCapture('video/ft2.mp4')
-# initializing subtractor 
+cap = cv2.VideoCapture('video/ft3.mp4')
+
 fgbg = cv2.createBackgroundSubtractorMOG2(0,80) 
 
 paused = False
@@ -14,7 +12,7 @@ keypoints = []
 
 params = cv2.SimpleBlobDetector_Params()
 params.filterByArea = True
-params.minArea = 150
+params.minArea = 250
 params.filterByCircularity = True
 params.minCircularity = 0.8
 params.filterByConvexity = True
@@ -25,44 +23,47 @@ params.minInertiaRatio = 0.01
 detector = cv2.SimpleBlobDetector_create(params)
 
 while(len(keypoints) == 0): 
-    ret, frame = cap.read()       
+    ret, frame = cap.read()
+    if not ret:
+        print("Palla non trovata")
+        exit() 
     keypoints = detector.detect(frame)
 
-tracker  = cv2.TrackerKCF_create()
+tracker  = cv2.TrackerCSRT_create()
 
-# for point in keypoints: 
-#     (x, y) = point.pt
-#     size = point.size / 2
-#     # print(size)
-#     area = (int(x - size), int(y -size), int(x+size), int(y+size))
-# print(area)
+for point in keypoints: 
+    (x, y) = point.pt
+    size = point.size * 3
+    # print(size)
+    area = (int(x - size), int(y -size), int(size), int(size))#(910, 247, 120, 76)
+print(area)
 # bboxs = cv2.selectROI(frame)
+# print(bboxs)
 # for bbox in bboxs:
 #     print(type(bbox))
 
-area = cv2.selectROI(frame)
+# area = cv2.selectROI(frame)
+fgmask = fgbg.apply(frame)
+ret = tracker.init(fgmask, area)
+
+# ret, bbox = tracker.update(fgmask)
+
+# if ret:
+#     (x, y, w, h) = bbox 
+#     cv2.rectangle(fgmask, (x,y), (w + x, h + y), (0, 255, 0), 2, 1)
 
 
-ret = tracker.init(frame, area)
+# cv2.imshow('frame', fgmask)
 
-ret, bbox = tracker.update(frame)
-
-if ret:
-    (x, y, w, h) = area 
-
-    cv2.rectangle(frame, (x,y), (w, h), (0, 255, 0), 2, 1)
-
-
-cv2.imshow('frame', frame)
-
-cv2.waitKey()
+# cv2.waitKey()
 
 while(1):
     if not paused: 
         ret, frame = cap.read()
+        fgmask = fgbg.apply(frame)
         if not ret:
             break
-        ret, bbox = tracker.update(frame)
+        ret, bbox = tracker.update(fgmask)
 
         if ret:
             (x, y, w, h) = [int(v) for v in bbox]
