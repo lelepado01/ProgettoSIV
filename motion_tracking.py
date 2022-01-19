@@ -28,8 +28,8 @@ def calculate_curve(pts, elements_to_remove = 0):
 
     return ls
 
-
-cap = cv2.VideoCapture('video/ft5.mp4')
+video_path = 'video/ft6.mp4'
+cap = cv2.VideoCapture(video_path)
 
 fgbg = cv2.createBackgroundSubtractorMOG2(0,80) 
 
@@ -68,8 +68,10 @@ ret = tracker.init(frame, area)
 
 while True:
     if not paused: 
+        last_frame = frame
         ret, frame = cap.read()
         if not ret:
+            frame = last_frame
             break
 
         ret, bbox = tracker.update(frame)
@@ -78,8 +80,11 @@ while True:
             (x, y, w, h) = [int(v) for v in bbox]
             pts_list.append((x+w/2, y + h/2))
 
-        for (x, y) in calculate_curve(pts_list):  
-            cv2.circle(frame, (int(x), int(y)), 1, (255,0,255), 4)
+        try: 
+            for (x, y) in calculate_curve(pts_list):  
+                cv2.circle(frame, (int(x), int(y)), 1, (255,0,255), 4)
+        except:
+            del pts_list[-1]
 
         for bbox in pts_list: 
             (x, y) = bbox
@@ -95,10 +100,10 @@ while True:
     if k == 32:
         paused = not paused
 
-cap = cv2.VideoCapture('video/ft5.mp4')
-ret, frame = cap.read()
+# cap = cv2.VideoCapture(video_path)
+# ret, frame = cap.read()
 
-for (x, y) in calculate_curve(pts_list, 10):  
+for (x, y) in calculate_curve(pts_list, 15):  
     cv2.circle(frame, (int(x), int(y)), 1, (255,0,255), 4)
 
 for (x, y) in pts_list:  

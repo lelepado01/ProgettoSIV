@@ -32,7 +32,7 @@ def calculate_curve(pts, elements_to_remove = 0):
 
 algorithm_view = False
   
-video_path = 'video/ft5.mp4'
+video_path = 'video/ft7.mp4'
 cap = cv2.VideoCapture(video_path)
   
 # initializing subtractor 
