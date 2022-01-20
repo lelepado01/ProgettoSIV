@@ -37,7 +37,7 @@ def get_initial_ball_position(video, detector):
     return (frame, initial_keypoint[0])
 
 
-video_path = 'video/ft5.mp4'
+video_path = 'video/ft6.mp4'
 cap = cv2.VideoCapture(video_path)
 
 paused = False
