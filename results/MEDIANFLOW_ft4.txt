@@ -1,0 +1,4 @@
+Number of points: 2
+Points:
+(827.5,259.5)
+(827.5,259.5)
