@@ -32,7 +32,7 @@ def calculate_curve(pts, elements_to_remove = 0):
 
 algorithm_view = False
   
-video_path = 'video/ft7.mp4'
+video_path = 'video/ft0.mp4'
 cap = cv2.VideoCapture(video_path)
   
 # initializing subtractor 
@@ -45,10 +45,10 @@ pts_list = []
 params = cv2.SimpleBlobDetector_Params()
 params.filterByArea = True
 params.minArea = 490
-params.filterByCircularity = True
-params.minCircularity = 0.8
-params.filterByConvexity = True
-params.minConvexity = 0.2
+# params.filterByCircularity = True
+# params.minCircularity = 0.8
+# params.filterByConvexity = True
+# params.minConvexity = 0.2
 params.filterByInertia = True
 params.minInertiaRatio = 0.1
 detector = cv2.SimpleBlobDetector_create(params)
@@ -70,7 +70,8 @@ while(1):
         keypoints = detector.detect(fgmask)
         blank = np.zeros((1, 1))
     
-        if keypoints != (): 
+        if keypoints != []: 
+            print(keypoints)
             pts_list.append(keypoints[0].pt)
 
         if algorithm_view: 
