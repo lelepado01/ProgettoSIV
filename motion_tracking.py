@@ -1,9 +1,9 @@
 
-from ctypes.wintypes import POINT
-from cv2 import KeyPoint
+from cv2 import selectROI
 import numpy as np
 import cv2
 from scipy import interpolate
+from soupsieve import select
 
 from tracker_types import Tracker
 import draw_utils as du
@@ -55,7 +55,7 @@ def get_initial_ball_position(video, detector):
     return (frame, initial_keypoint[0])
 
 
-def get_area_from_keypoint(keypoint : KeyPoint): 
+def get_area_from_keypoint(keypoint : cv2.KeyPoint): 
     (x, y) = keypoint.pt
     size = keypoint.size * 3
     return (int(x - size / 2), int(y -size / 2), int(size), int(size))
@@ -64,7 +64,7 @@ def show_final_image(pts_list, frame):
     # Final frame is used to display all points and curve
     # We can choose how many points (from the end of the list) 
     # to ignore, becouse often the ball changes trajectory
-    du.draw_line(frame, pts_list)
+    du.draw_line(frame, calculate_curve(pts_list))
     du.draw_points(frame, pts_list)
     cv2.imshow('Final Interpolated function', frame)
 
@@ -82,7 +82,7 @@ def get_last_frame(video_path):
         last_frame = frame
 
 
-def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save_res=True):
+def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save_res=True, select_area = False):
     # Source video
     videos=['ft0.mp4','ft1.mp4','ft2.mp4','ft3.mp4','ft4.mp4','ft5.mp4','ft6.mp4','ft7.mp4']
     video=videos[video_n]
@@ -106,15 +106,18 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
     cap = cv2.VideoCapture(video_path)
 
     pts_list = []
-
     paused = False
 
     # EXECUTION
     # Ball detection
-    (frame, initial_keypoint) = get_initial_ball_position(cap, detector)
-    ball_area = get_area_from_keypoint(initial_keypoint)
-
     # Tracking initilization according to identification point
+    if select_area: 
+        ret, frame = cap.read()
+        ball_area = selectROI(frame)
+    else: 
+        (frame, initial_keypoint) = get_initial_ball_position(cap, detector)
+        ball_area = get_area_from_keypoint(initial_keypoint)
+
     ret = tracker.init(frame, ball_area)
 
     while True:
@@ -181,5 +184,6 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
 # show_execution: default to True, show real time tracking of the ball
 # show_result: default to True, show final tajectory in the frame
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
+# select_area: 
 #  execute(video, tracker, show_execution, show_result, save_result)
-execute(7, Tracker.CSRT, True, True, False)
+execute(4, Tracker.CSRT, True, True, False, True)
