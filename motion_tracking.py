@@ -65,21 +65,21 @@ def execute(video_n,tracker,sh_exec=True,sh_res=True,sv_res=True):
 
     # INIZIALIZATIONS
     if tracker_type == 'BOOSTING':
-        tracker = cv2.TrackerBoosting_create()
+        tracker = cv2.legacy.TrackerBoosting_create()
     elif tracker_type == 'MIL':
-        tracker = cv2.TrackerMIL_create()
+        tracker = cv2.legacy.TrackerMIL_create()
     elif tracker_type == 'KCF':
-        tracker = cv2.TrackerKCF_create()
+        tracker = cv2.legacy.TrackerKCF_create()
     elif tracker_type == 'TLD':
-        tracker = cv2.TrackerTLD_create()
+        tracker = cv2.legacy.TrackerTLD_create()
     elif tracker_type == 'MEDIANFLOW':
-        tracker = cv2.TrackerMedianFlow_create()
+        tracker = cv2.legacy.TrackerMedianFlow_create()
     elif tracker_type == 'GOTURN':
-            tracker = cv2.TrackerGOTURN_create()
+            tracker = cv2.legacy.TrackerGOTURN_create()
     elif tracker_type == 'MOSSE':
-        tracker = cv2.TrackerMOSSE_create()
+        tracker = cv2.legacy.TrackerMOSSE_create()
     elif tracker_type == "CSRT":
-        tracker = cv2.TrackerCSRT_create()
+        tracker = cv2.legacy.TrackerCSRT_create()
 
     video_path = 'video/'+video+'.mp4'
 
