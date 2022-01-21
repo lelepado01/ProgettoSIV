@@ -1,4 +1,0 @@
-Number of points: 2
-Points:
-(744.5,173.5)
-(744.5,174.5)
