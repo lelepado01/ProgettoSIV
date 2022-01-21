@@ -1,3 +1,0 @@
-Number of points: 1
-Points:
-(851.0,320.0)
