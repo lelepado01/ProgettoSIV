@@ -1,0 +1,4 @@
+Number of points: 2
+Points:
+(992.0,302.0)
+(992.0,301.0)
