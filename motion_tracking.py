@@ -6,9 +6,7 @@ import cv2
 from scipy import interpolate
 
 from tracker_types import Tracker
-
-LINE_COLOR = (200,8,20)
-POINT_COLOR = (8,255,255)
+import draw_utils as du
 
 # UTILS
 def monotonize(x,y):
@@ -62,21 +60,12 @@ def get_area_from_keypoint(keypoint : KeyPoint):
     size = keypoint.size * 3
     return (int(x - size / 2), int(y -size / 2), int(size), int(size))
 
-
-def draw_points(frame, pts_list): 
-    for (x, y) in pts_list:  
-        cv2.circle(frame, (int(x), int(y)), 1, POINT_COLOR, 5)
-
-def draw_line(frame, pts_list):
-    for (x, y) in calculate_curve(pts_list): 
-        cv2.circle(frame, (int(x), int(y)), 1, LINE_COLOR, 4)
-
 def show_final_image(pts_list, frame): 
     # Final frame is used to display all points and curve
     # We can choose how many points (from the end of the list) 
     # to ignore, becouse often the ball changes trajectory
-    draw_line(frame, pts_list)
-    draw_points(frame, pts_list)
+    du.draw_line(frame, pts_list)
+    du.draw_points(frame, pts_list)
     cv2.imshow('Final Interpolated function', frame)
 
 def get_last_frame(video_path): 
@@ -95,9 +84,9 @@ def get_last_frame(video_path):
 
 def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save_res=True):
     # Source video
-    videos=['ft0','ft1','ft2','ft3','ft4','ft5','ft6']
+    videos=['ft0.mp4','ft1.mp4','ft2.mp4','ft3.mp4','ft4.mp4','ft5.mp4','ft6.mp4','ft7.mp4']
     video=videos[video_n]
-    video_path = 'video/'+video+'.mp4'
+    video_path = 'video/'+video
 
     # Detector
     params = cv2.SimpleBlobDetector_Params()
@@ -144,13 +133,14 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
             # Try except to remove from the list the duplicate points 
             # (a duplicate can only be the last point in the list, just remove it)
             try: 
-                draw_line(frame, pts_list)
+                du.draw_area(frame, (x, y, w, h))
+                du.draw_line(frame, calculate_curve(pts_list))
             except:
                 del pts_list[-1]
 
             if show_exec:
                 # Display all points found by the motion tracker
-                draw_points(frame, pts_list)
+                du.draw_points(frame, pts_list)
                 cv2.imshow('Frame by frame calculations', frame)        
 
                 k = cv2.waitKey(30) & 0xff
@@ -170,10 +160,8 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
     if save_res:
         frame = get_last_frame(video_path)
         if not show_res:
-            for (x, y) in calculate_curve(pts_list): 
-                cv2.circle(frame, (int(x), int(y)), 1, LINE_COLOR, 4)
-            for (x, y) in pts_list:  
-                cv2.circle(frame, (int(x), int(y)), 1, POINT_COLOR, 5)
+            du.draw_line(frame, calculate_curve(pts_list))
+            du.draw_points(frame, pts_list)
         stat_str=""
         for (x, y) in pts_list:  
             stat_str="{}({},{})\n".format(stat_str,str(x),str(y))
@@ -194,4 +182,4 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
 # show_result: default to True, show final tajectory in the frame
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result)
-execute(4, Tracker.CSRT, True, True, False)
+execute(7, Tracker.CSRT, True, True, False)
