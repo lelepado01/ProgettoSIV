@@ -1,29 +1,46 @@
 
+from ctypes.wintypes import POINT
+from cv2 import KeyPoint
 import numpy as np
 import cv2
 from scipy import interpolate
 
 from tracker_types import Tracker
 
+LINE_COLOR = (200,8,20)
+POINT_COLOR = (8,255,255)
+
 # UTILS
-def calculate_curve(pts, elements_to_remove = 0): 
+def monotonize(x,y):
+    inc=[(x[0],y[0])]
+    dec=[(x[0],y[0])]
+    for i in range(len(x)-1):
+        if x[i+1]>x[i]:
+            inc.append((x[i+1],y[i+1]))
+        elif x[i+1]<x[i]:
+            dec.append((x[i+1],y[i+1]))
+    if len(inc)>len(dec):
+        return inc
+    else:
+        return dec
+
+def calculate_curve(pts): 
     if len(pts) < 3: 
         return []
         
     x_list = [item[0] for item in pts]
     y_list = [item[1] for item in pts]
 
-    for _ in range(elements_to_remove): 
-        del x_list[-1]
-        del y_list[-1]
+    zip_ls = monotonize(x_list, y_list)
+    x_list = [x for (x, _) in zip_ls] 
+    y_list = [y for (_, y) in zip_ls] 
 
-    f = interpolate.interp1d(x_list, y_list, kind='quadratic', fill_value='extrapolate')
+    f = interpolate.interp1d(x_list, y_list, kind='linear', fill_value='extrapolate')
 
     x_min = min(x_list)
     x_max = max(x_list)
-    left_range = 150
-    right_range = 50
-    x_points = np.arange(x_min - left_range, x_max + right_range, 0.2)
+    predicted_line_length = 50
+    x_points = np.arange(x_min - predicted_line_length, x_max + predicted_line_length, 1)
 
     return [(x_pt, f(x_pt)) for x_pt in x_points]
 
@@ -34,41 +51,33 @@ def get_initial_ball_position(video, detector):
         ret, frame = video.read()
         if not ret:
             print("---\nBall not found\n---")
-            exit() 
+            exit(1) 
         initial_keypoint = detector.detect(frame)
 
     return (frame, initial_keypoint[0])
 
 
-def get_area_from_keypoint(keypoint): 
+def get_area_from_keypoint(keypoint : KeyPoint): 
     (x, y) = keypoint.pt
     size = keypoint.size * 3
     return (int(x - size / 2), int(y -size / 2), int(size), int(size))
 
 
+def draw_points(frame, pts_list): 
+    for (x, y) in pts_list:  
+        cv2.circle(frame, (int(x), int(y)), 1, POINT_COLOR, 5)
 
-# def on_slider_change(value): 
-#     number_of_points_ignored = 15
-#     if value != number_of_points_ignored:  
-#         print(value)
-#         number_of_points_ignored = value
-#         # cv2.destroyWindow('Final Interpolated function')
-#         show_final_image(number_of_points_ignored, get_last_frame(video_path))
+def draw_line(frame, pts_list):
+    for (x, y) in calculate_curve(pts_list): 
+        cv2.circle(frame, (int(x), int(y)), 1, LINE_COLOR, 4)
 
-
-
-def show_final_image(pts_list, points_ignored, frame, first_image = False): 
+def show_final_image(pts_list, frame): 
     # Final frame is used to display all points and curve
     # We can choose how many points (from the end of the list) 
     # to ignore, becouse often the ball changes trajectory
-    for (x, y) in calculate_curve(pts_list,points_ignored): 
-        cv2.circle(frame, (int(x), int(y)), 1, (255,0,255), 4)
-    for (x, y) in pts_list:  
-        cv2.circle(frame, (int(x), int(y)), 1, (0,255,255), 5)
+    draw_line(frame, pts_list)
+    draw_points(frame, pts_list)
     cv2.imshow('Final Interpolated function', frame)
-    # if first_image:
-    #     cv2.createTrackbar('slider', 'Final Interpolated function', 0, 30, on_slider_change)
-
 
 def get_last_frame(video_path): 
     video = cv2.VideoCapture(video_path)
@@ -82,14 +91,6 @@ def get_last_frame(video_path):
             return last_frame
         
         last_frame = frame
-
-
-def show_execution(pts_list, frame): 
-    # Display all points found by the motion tracker
-    for (x, y) in pts_list: 
-        cv2.circle(frame, (int(x), int(y)), 1, (0,255,255), 5)
-
-    cv2.imshow('Frame by frame calculations', frame)
 
 
 def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save_res=True):
@@ -143,14 +144,15 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
             # Try except to remove from the list the duplicate points 
             # (a duplicate can only be the last point in the list, just remove it)
             try: 
-                for (x, y) in calculate_curve(pts_list):  
-                    cv2.circle(frame, (int(x), int(y)), 1, (255,0,255), 4)
+                draw_line(frame, pts_list)
             except:
                 del pts_list[-1]
 
             if show_exec:
-                show_execution(pts_list, frame)
-                
+                # Display all points found by the motion tracker
+                draw_points(frame, pts_list)
+                cv2.imshow('Frame by frame calculations', frame)        
+
                 k = cv2.waitKey(30) & 0xff
                 
                 if k == 27: # ESC
@@ -163,16 +165,15 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
         cv2.destroyWindow('Frame by frame calculations')
 
     if show_res: 
-        number_of_points_ignored = 15
-        show_final_image(pts_list, number_of_points_ignored, get_last_frame(video_path), first_image=True)
+        show_final_image(pts_list, get_last_frame(video_path))
 
     if save_res:
         frame = get_last_frame(video_path)
         if not show_res:
             for (x, y) in calculate_curve(pts_list): 
-                cv2.circle(frame, (int(x), int(y)), 1, (255,0,255), 4)
+                cv2.circle(frame, (int(x), int(y)), 1, LINE_COLOR, 4)
             for (x, y) in pts_list:  
-                cv2.circle(frame, (int(x), int(y)), 1, (0,255,255), 5)
+                cv2.circle(frame, (int(x), int(y)), 1, POINT_COLOR, 5)
         stat_str=""
         for (x, y) in pts_list:  
             stat_str="{}({},{})\n".format(stat_str,str(x),str(y))
@@ -188,15 +189,9 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
     cap.release()
     cv2.destroyAllWindows()
 
-# execute(video_source,tracker_type,show_execution,show_result,save_result)
-# To set parameters chenge them in the function below.
 # video: int from 0 to 6 (respectively [ft0,ft1,ft2,ft3,ft4,ft5,ft6,ft6])
-# tracker: int from 0 to 6 (respectively ['BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'MOSSE', 'CSRT'])
 # show_execution: default to True, show real time tracking of the ball
 # show_result: default to True, show final tajectory in the frame
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
-
-# for i in range(4,7):
-#     for j in range(7):
-#  Execute(video, tracker, show_execution, show_result, save_result)
+#  execute(video, tracker, show_execution, show_result, save_result)
 execute(4, Tracker.CSRT, True, True, False)

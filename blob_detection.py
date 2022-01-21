@@ -30,7 +30,7 @@ def calculate_curve(pts, elements_to_remove = 0):
     return ls
 
 
-algorithm_view = False
+algorithm_view = True
   
 video_path = 'video/ft0.mp4'
 cap = cv2.VideoCapture(video_path)
