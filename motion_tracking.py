@@ -12,10 +12,6 @@ def calculate_curve(pts, elements_to_remove = 0):
         
     x_list = [item[0] for item in pts]
     y_list = [item[1] for item in pts]
-    
-    f = open("tmp.txt", "w")
-    f.write(str(x_list)+"\n"+str(y_list))
-    f.close()
 
     for _ in range(elements_to_remove): 
         del x_list[-1]
@@ -199,4 +195,4 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
 # for i in range(4,7):
 #     for j in range(7):
 #  Execute(video, tracker, show_execution, show_result, save_result)
-execute(1,Tracker.Boosting,True,True,False)
+execute(4,Tracker.CSRT,True,True,False)
