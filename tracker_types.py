@@ -34,3 +34,22 @@ class Tracker(enum.Enum):
         #elif tracker_type == Tracker.CSRT:
             
         return cv2.legacy.TrackerCSRT_create()
+
+    def get_name(tracker_type): 
+        if tracker_type == Tracker.Boosting:
+            return "Tracker.Boosting"
+        elif tracker_type == Tracker.MIL:
+            return "Tracker.MIL"
+        elif tracker_type == Tracker.KCF:
+            return "Tracker.KCF"
+        elif tracker_type == Tracker.TLD:
+            return "Tracker.TLD"
+        elif tracker_type == Tracker.MedianFlow:
+            return "Tracker.MedianFlow"
+        elif tracker_type == Tracker.GOTURN:
+            return "Tracker.GOTURN"
+        elif tracker_type == Tracker.MOSSE:
+            return "Tracker.MOSSE"
+        #elif tracker_type == Tracker.CSRT:
+            
+        return "Tracker.CSRT"

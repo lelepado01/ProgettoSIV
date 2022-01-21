@@ -44,6 +44,13 @@ def get_initial_ball_position(video, detector):
     return (frame, initial_keypoint[0])
 
 
+def get_area_from_keypoint(keypoint): 
+    (x, y) = keypoint.pt
+    size = keypoint.size * 3
+    return (int(x - size / 2), int(y -size / 2), int(size), int(size))
+
+
+
 # def on_slider_change(value): 
 #     number_of_points_ignored = 15
 #     if value != number_of_points_ignored:  
@@ -63,7 +70,6 @@ def show_final_image(pts_list, points_ignored, frame, first_image = False):
     for (x, y) in pts_list:  
         cv2.circle(frame, (int(x), int(y)), 1, (0,255,255), 5)
     cv2.imshow('Final Interpolated function', frame)
-    cv2.waitKey()
     # if first_image:
     #     cv2.createTrackbar('slider', 'Final Interpolated function', 0, 30, on_slider_change)
 
@@ -120,10 +126,7 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
     # EXECUTION
     # Ball detection
     (frame, initial_keypoint) = get_initial_ball_position(cap, detector)
-    # ball_area = get_keypoint_area(initial_keypoint)
-    (x, y) = initial_keypoint.pt
-    size = initial_keypoint.size * 3
-    ball_area = (int(x - size / 2), int(y -size / 2), int(size), int(size))
+    ball_area = get_area_from_keypoint(initial_keypoint)
 
     # Tracking initilization according to identification point
     ret = tracker.init(frame, ball_area)
@@ -168,6 +171,7 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
         show_final_image(pts_list, number_of_points_ignored, get_last_frame(video_path), first_image=True)
 
     if save_res:
+        frame = get_last_frame(video_path)
         if not show_res:
             for (x, y) in calculate_curve(pts_list): 
                 cv2.circle(frame, (int(x), int(y)), 1, (255,0,255), 4)
@@ -176,8 +180,8 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
         stat_str=""
         for (x, y) in pts_list:  
             stat_str="{}({},{})\n".format(stat_str,str(x),str(y))
-        stats_path="results/{}_{}.txt".format(tracker_type,video)
-        image_path="results/{}_{}.png".format(tracker_type,video)
+        stats_path="results/{}_{}.txt".format(Tracker.get_name(tracker_type),video)
+        image_path="results/{}_{}.png".format(Tracker.get_name(tracker_type),video)
         with open(stats_path, "w") as f:
             f.write("Number of points: {}\nPoints:\n{}".format(len(pts_list),stat_str))
         cv2.imwrite(image_path,frame)
@@ -199,4 +203,4 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
 # for i in range(4,7):
 #     for j in range(7):
 #  Execute(video, tracker, show_execution, show_result, save_result)
-execute(1,Tracker.Boosting,True,True,False)
+execute(4, Tracker.CSRT, True, True, False)
