@@ -78,15 +78,16 @@ def show_final_image(pts_list, frame):
 def get_last_frame(video_path): 
     video = cv2.VideoCapture(video_path)
     # last_frame_num = video.get(cv2.CAP_PROP_FRAME_COUNT)-1
-    # video.set(cv2.CAP_PROP_POS_FRAMES, int(last_frame_num))
-    
+    video.set(cv2.CAP_PROP_POS_FRAMES, int(5))
+    ret, frame = video.read()
+    return frame
     # TODO: Blah
-    while True: 
-        ret, frame = video.read()
-        if not ret: 
-            return last_frame
+    # while True: 
+    #     ret, frame = video.read()
+    #     if not ret: 
+    #         return last_frame
         
-        last_frame = frame
+    #     last_frame = frame
 
 
 def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, save_res = True, select_area = False):
