@@ -6,6 +6,8 @@ from scipy import interpolate
 
 from tracker_types import Tracker
 import draw_utils as du
+from PointList import PointList
+from VideoPlayer import VideoPlayer
 
 # UTILS
 def monotonize(x,y):
@@ -50,18 +52,6 @@ def calculate_curve(pts):
     return [(x_pt, f(x_pt)) for x_pt in x_points]
 
 
-def get_initial_ball_position(video, detector):  
-    initial_keypoint = []
-    while(len(initial_keypoint) == 0): 
-        ret, frame = video.read()
-        if not ret:
-            print("---\nBall not found\n---")
-            return (frame, (0,0,0,0)) 
-        initial_keypoint = detector.detect(frame)
-
-    return (frame, initial_keypoint[0])
-
-
 def get_area_from_keypoint(keypoint : cv2.KeyPoint): 
     (x, y) = keypoint.pt
     size = keypoint.size * 3
@@ -75,24 +65,20 @@ def show_final_image(pts_list, frame):
     du.draw_points(frame, pts_list)
     cv2.imshow('Final Interpolated function', frame)
 
-def get_last_frame(video_path): 
+def get_frame(video_path, index): 
     video = cv2.VideoCapture(video_path)
     # last_frame_num = video.get(cv2.CAP_PROP_FRAME_COUNT)-1
-    video.set(cv2.CAP_PROP_POS_FRAMES, int(5))
+    video.set(cv2.CAP_PROP_POS_FRAMES, int(index))
     ret, frame = video.read()
     return frame
-    # TODO: Blah
-    # while True: 
-    #     ret, frame = video.read()
-    #     if not ret: 
-    #         return last_frame
-        
-    #     last_frame = frame
 
 
 def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, save_res = True, select_area = False):
     # Source video
     video_path = 'video/ft'+str(video_n) + ".mp4"
+
+    pointList = PointList()
+    videoPlayer = VideoPlayer(video_path)
 
     # Detector
     params = cv2.SimpleBlobDetector_Params()
@@ -109,7 +95,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
     # INIZIALIZATIONS
     tracker = Tracker.initialize_tracker(tracker_type)
     detector = cv2.SimpleBlobDetector_create(params)
-    cap = cv2.VideoCapture(video_path)
+    #cap = cv2.VideoCapture(video_path)
 
     pts_list = []
     paused = False
@@ -118,19 +104,21 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
     # Ball detection
     # Tracking initilization according to identification point
     if select_area: 
-        ret, frame = cap.read()
+        ret, frame = videoPlayer.getNextVideoFrame()
         ball_area = selectROI(frame)
     else: 
-        (frame, initial_keypoint) = get_initial_ball_position(cap, detector)
+        (frame, initial_keypoint) = videoPlayer.get_initial_ball_position(detector)
         if initial_keypoint == (0,0,0,0): 
             return
         ball_area = get_area_from_keypoint(initial_keypoint)
 
     ret = tracker.init(frame, ball_area)
 
+    frameIndex = 0
     while True:
         if not paused: 
-            ret, frame = cap.read()
+            frameIndex += 1
+            ret, frame = videoPlayer.getNextVideoFrame()
             if not ret:
                 break
 
@@ -138,20 +126,20 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 
             if ret:
                 (x, y, w, h) = [int(v) for v in bbox]
-                pts_list.append((x+w/2, y + h/2))
-            
+                pointList.addFrame(frameIndex, (x+w/2, y + h/2))
+
+            currentFramePoints = pointList.getPointsAtFrame(frameIndex)
+
             # Display all points from the calculated curve
             # Try except to remove from the list the duplicate points 
             # (a duplicate can only be the last point in the list, just remove it)
-            try: 
-                du.draw_area(frame, (x, y, w, h))
-                du.draw_line(frame, calculate_curve(pts_list))
-            except:
-                del pts_list[-1]
+
+            du.draw_area(frame, (x, y, w, h))
+            du.draw_line(frame, calculate_curve(currentFramePoints))
 
             if show_exec:
                 # Display all points found by the motion tracker
-                du.draw_points(frame, pts_list)
+                du.draw_points(frame, currentFramePoints)
                 cv2.imshow('Frame by frame calculations', frame)        
 
                 k = cv2.waitKey(30) & 0xff
@@ -166,26 +154,28 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         cv2.destroyWindow('Frame by frame calculations')
 
     if show_res: 
-        show_final_image(pts_list, get_last_frame(video_path))
+        ret, frame = videoPlayer.getVideoFrame(int(videoPlayer.getFrameNumber())-3)
+        show_final_image(currentFramePoints, frame)
 
     if save_res:
-        frame = get_last_frame(video_path)
+        frame = videoPlayer.getVideoFrame(1)
         if not show_res:
-            du.draw_line(frame, calculate_curve(pts_list))
-            du.draw_points(frame, pts_list)
+            du.draw_line(frame, calculate_curve(currentFramePoints))
+            du.draw_points(frame, currentFramePoints)
         stat_str=""
-        for (x, y) in pts_list:  
+        for (x, y) in currentFramePoints:  
             stat_str="{}({},{})\n".format(stat_str,str(x),str(y))
         stats_path="results/{}_{}.txt".format(Tracker.get_name(tracker_type),video_path)
         image_path="results/{}_{}.png".format(Tracker.get_name(tracker_type),video_path)
         with open(stats_path, "w") as f:
-            f.write("Number of points: {}\nPoints:\n{}".format(len(pts_list),stat_str))
+            f.write("Number of points: {}\nPoints:\n{}".format(len(currentFramePoints),stat_str))
         cv2.imwrite(image_path,frame)
         print("Saved: "+image_path)
 
     cv2.waitKey()
 
-    cap.release()
+    videoPlayer.destroy()
+    
     cv2.destroyAllWindows()
 
 # show_execution: default to True, show real time tracking of the ball
