@@ -3,7 +3,7 @@ from cv2 import selectROI
 import numpy as np
 import cv2
 from scipy import interpolate
-from soupsieve import select
+
 
 from tracker_types import Tracker
 import draw_utils as du
@@ -18,26 +18,34 @@ def monotonize(x,y):
         elif x[i+1]<x[i]:
             dec.append((x[i+1],y[i+1]))
     if len(inc)>len(dec):
-        return inc
+        x_list = [x for (x, _) in inc] 
+        y_list = [y for (_, y) in inc] 
+        return (x_list,y_list)
     else:
-        return dec
+        x_list = [x for (x, _) in dec] 
+        y_list = [y for (_, y) in dec] 
+        return (x_list,y_list)
 
 def calculate_curve(pts): 
     if len(pts) < 3: 
         return []
-        
+
+    # divide x and y lists    
     x_list = [item[0] for item in pts]
     y_list = [item[1] for item in pts]
 
-    zip_ls = monotonize(x_list, y_list)
-    x_list = [x for (x, _) in zip_ls] 
-    y_list = [y for (_, y) in zip_ls] 
+    # monotonize x axis
+    (x_list,y_list) = monotonize(x_list, y_list)
 
     f = interpolate.interp1d(x_list, y_list, kind='linear', fill_value='extrapolate')
 
     x_min = min(x_list)
     x_max = max(x_list)
-    predicted_line_length = 50
+
+    # predict 20% of line length in px
+    x_len=abs(x_max-x_min)
+    predicted_line_length = 0.2*x_len
+    
     x_points = np.arange(x_min - predicted_line_length, x_max + predicted_line_length, 1)
 
     return [(x_pt, f(x_pt)) for x_pt in x_points]
@@ -82,7 +90,7 @@ def get_last_frame(video_path):
         last_frame = frame
 
 
-def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save_res=True, select_area = False):
+def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, save_res = True, select_area = False):
     # Source video
     videos=['ft0.mp4','ft1.mp4','ft2.mp4','ft3.mp4','ft4.mp4','ft5.mp4','ft6.mp4','ft7.mp4']
     video=videos[video_n]
@@ -184,6 +192,6 @@ def execute(video_n, tracker_type : Tracker, show_exec=True, show_res=True, save
 # show_execution: default to True, show real time tracking of the ball
 # show_result: default to True, show final tajectory in the frame
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
-# select_area: 
-#  execute(video, tracker, show_execution, show_result, save_result)
-execute(4, Tracker.CSRT, True, True, False, True)
+# select_area: default to False, allow to manually select the ROI
+#  execute(video, tracker, show_execution, show_result, save_result, select_area)
+execute(4, Tracker.CSRT, True, True, False, False)
