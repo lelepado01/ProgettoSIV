@@ -95,9 +95,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
     # INIZIALIZATIONS
     tracker = Tracker.initialize_tracker(tracker_type)
     detector = cv2.SimpleBlobDetector_create(params)
-    #cap = cv2.VideoCapture(video_path)
 
-    pts_list = []
     paused = False
 
     # EXECUTION
@@ -133,7 +131,6 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
             # Display all points from the calculated curve
             # Try except to remove from the list the duplicate points 
             # (a duplicate can only be the last point in the list, just remove it)
-
             du.draw_area(frame, (x, y, w, h))
             du.draw_line(frame, calculate_curve(currentFramePoints))
 
@@ -181,7 +178,6 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # show_execution: default to True, show real time tracking of the ball
 # show_result: default to True, show final tajectory in the frame
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
-# select_area: 
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
 execute(11, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
