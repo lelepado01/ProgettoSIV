@@ -3,7 +3,6 @@ from cv2 import selectROI
 import numpy as np
 import cv2
 from scipy import interpolate
-from parameter_utils import get_blob_parameters_for_video
 
 from tracker_types import Tracker
 import parameter_utils as pu
@@ -163,12 +162,12 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
                 du.draw_points(frame, currentFramePoints)
                 cv2.imshow('Frame by frame calculations', frame)        
 
-                k = cv2.waitKey(30) & 0xff
-                
-                if k == 27: # ESC
-                    break 
-                if k == 32: # SPACE
-                    paused = not paused
+        k = cv2.waitKey(30) & 0xff
+        
+        if k == 27: # ESC
+            break 
+        if k == 32: # SPACE
+            paused = not paused
 
 
     if show_exec:
@@ -207,4 +206,17 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(10, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(11, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+
+# VIDEO Params state: 
+# 
+# 1 NO
+# 2 No (qualcosa)
+# 4 Si
+# 5 Si
+# 6 No (qualcosa)
+# 7 No
+# 8 No
+# 9 Si
+# 10 No (qualcosa)
+# 11 No
