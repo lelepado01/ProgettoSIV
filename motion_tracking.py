@@ -3,8 +3,10 @@ from cv2 import selectROI
 import numpy as np
 import cv2
 from scipy import interpolate
+from parameter_utils import get_blob_parameters_for_video
 
 from tracker_types import Tracker
+import parameter_utils as pu
 import draw_utils as du
 from PointList import PointList
 from VideoPlayer import VideoPlayer
@@ -40,6 +42,23 @@ def correct_y(x_list,y_list):
         (y_tail,x_tail) = monotonize(y_tail,x_tail)
         return(x_head+x_tail,y_head+y_tail)
     return (x_list,y_list)
+
+
+def evaluate_shot(pts_found, pts_line): 
+    total_variance = 0
+
+    pts_found.reverse()
+    pts_line.reverse()
+    for ptf in pts_found: 
+        for ptl in pts_line: 
+            if ptl[0] == ptf[0]: 
+                if ptl[1] == ptf[1]:
+                    return total_variance
+                total_variance += pow(ptl[1] - ptf[1], 2) # calc point variance
+                break                
+            
+    return total_variance
+
 
 def calculate_curve(pts): 
     # divide x and y lists    
@@ -95,17 +114,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
     pointList = PointList()
     videoPlayer = VideoPlayer(video_path)
 
-    # Detector
-    params = cv2.SimpleBlobDetector_Params()
-    params.filterByArea = True
-    params.minArea = 500
-    params.filterByCircularity = True
-    params.minCircularity = 0.8
-    params.filterByConvexity = True
-    params.minConvexity = 0.01
-    params.filterByInertia = True
-    params.minInertiaRatio = 0.01
-
+    params = pu.get_blob_parameters_for_video(video_n)
 
     # INIZIALIZATIONS
     tracker = Tracker.initialize_tracker(tracker_type)
@@ -166,6 +175,8 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         cv2.destroyWindow('Frame by frame calculations')
 
     if show_res: 
+        print(evaluate_shot(currentFramePoints, calculate_curve(currentFramePoints)))
+
         ret, frame = videoPlayer.getLastVideoFrame()
         if ret:
             show_final_image(currentFramePoints, frame)
@@ -196,4 +207,4 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(4, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(10, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)

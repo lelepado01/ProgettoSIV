@@ -1,8 +1,11 @@
 # ProgettoSIV
 
-#### Idea
-Avere in output un Vec3 per ogni faccia che punta verso la direzione dello sguardo.
+#### Basketball tracking
+The project consists in finding and tracing the position of a basketball shot from the free throw line.
 
- - Ratio between left and right eye
- - Distance betweem eyes and center of face
- - Distance between center of face and center of body
+#### TODO
+ - Custom parameters for each video (file parameter_utils.py)
+ - calculate_curve() in motion_tracking.py sometimes catches wrong y position  
+    (es. video 10)
+ - Try to make work evaluate_shot() somehow
+ - Division by zero check in calculate_curve()
