@@ -57,7 +57,7 @@ while(1):
 
     # frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
 
-    cv2.imshow('frame', frame)
+    cv2.imshow('frame', hvs)
 
     k = cv2.waitKey(30) & 0xff
     if k == 27:

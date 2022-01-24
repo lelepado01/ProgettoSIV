@@ -50,10 +50,7 @@ def calculate_curve(pts):
     (x_list,y_list) = monotonize(x_list, y_list)
     (x_list,y_list) = correct_y(x_list,y_list)
 
-    if len(x_list) < 3: 
-        return []
-
-    if len(x_list) < 3  or len(y_list): 
+    if len(x_list) < 3  or len(y_list) < 3: 
         return []
 
     f = interpolate.interp1d(x_list, y_list, kind='linear', fill_value='extrapolate')
@@ -102,10 +99,10 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
     params = cv2.SimpleBlobDetector_Params()
     params.filterByArea = True
     params.minArea = 500
-    # params.filterByCircularity = True
-    # params.minCircularity = 0.8
-    # params.filterByConvexity = True
-    # params.minConvexity = 0.01
+    params.filterByCircularity = True
+    params.minCircularity = 0.8
+    params.filterByConvexity = True
+    params.minConvexity = 0.01
     params.filterByInertia = True
     params.minInertiaRatio = 0.01
 
@@ -169,7 +166,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         cv2.destroyWindow('Frame by frame calculations')
 
     if show_res: 
-        ret, frame = videoPlayer.getVideoFrame(1)
+        ret, frame = videoPlayer.getLastVideoFrame()
         if ret:
             show_final_image(currentFramePoints, frame)
 
@@ -199,5 +196,4 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-for i in range(0, 12):
-    execute(i, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(4, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
