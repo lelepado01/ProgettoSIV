@@ -10,6 +10,11 @@ from PointList import PointList
 from VideoPlayer import VideoPlayer
 
 # UTILS
+def get_splitted_lists(list):
+    x_list = [x for (x, _) in list] 
+    y_list = [y for (_, y) in list] 
+    return (x_list,y_list)  
+
 def monotonize(x,y):
     inc=[(x[0],y[0])]
     dec=[(x[0],y[0])]
@@ -19,13 +24,22 @@ def monotonize(x,y):
         elif x[i+1]<x[i]:
             dec.append((x[i+1],y[i+1]))
     if len(inc)>len(dec):
-        x_list = [x for (x, _) in inc] 
-        y_list = [y for (_, y) in inc] 
-        return (x_list,y_list)
+        return get_splitted_lists(inc)
     else:
-        x_list = [x for (x, _) in dec] 
-        y_list = [y for (_, y) in dec] 
-        return (x_list,y_list)
+        return get_splitted_lists(dec)
+
+def correct_y(x_list,y_list):
+    min_value = min(y_list)
+    min_index = y_list.index(min_value)
+    if min_index != (len(y_list) - 1) and min_index!=0:
+        y_head = y_list[:min_index]
+        x_head = x_list[:min_index]
+        y_tail = y_list[min_index:]
+        x_tail = x_list[min_index:]
+        (y_head,x_head) = monotonize(y_head,x_head)
+        (y_tail,x_tail) = monotonize(y_tail,x_tail)
+        return(x_head+x_tail,y_head+y_tail)
+    return (x_list,y_list)
 
 def calculate_curve(pts): 
     # divide x and y lists    
@@ -34,6 +48,10 @@ def calculate_curve(pts):
 
     # monotonize x axis
     (x_list,y_list) = monotonize(x_list, y_list)
+    (x_list,y_list) = correct_y(x_list,y_list)
+
+    if len(x_list) < 3: 
+        return []
 
     if len(x_list) < 3  or len(y_list): 
         return []
