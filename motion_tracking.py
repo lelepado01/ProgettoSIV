@@ -28,15 +28,15 @@ def monotonize(x,y):
         return (x_list,y_list)
 
 def calculate_curve(pts): 
-    if len(pts) < 3: 
-        return []
-
     # divide x and y lists    
     x_list = [item[0] for item in pts]
     y_list = [item[1] for item in pts]
 
     # monotonize x axis
     (x_list,y_list) = monotonize(x_list, y_list)
+
+    if len(x_list) < 3  or len(y_list): 
+        return []
 
     f = interpolate.interp1d(x_list, y_list, kind='linear', fill_value='extrapolate')
 
@@ -151,11 +151,12 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         cv2.destroyWindow('Frame by frame calculations')
 
     if show_res: 
-        ret, frame = videoPlayer.getVideoFrame(int(videoPlayer.getFrameNumber())-3)
-        show_final_image(currentFramePoints, frame)
+        ret, frame = videoPlayer.getVideoFrame(int(videoPlayer.getFrameNumber())-5)
+        if ret:
+            show_final_image(currentFramePoints, frame)
 
     if save_res:
-        frame = videoPlayer.getVideoFrame(1)
+        ret, frame = videoPlayer.getVideoFrame(1)
         if not show_res:
             du.draw_line(frame, calculate_curve(currentFramePoints))
             du.draw_points(frame, currentFramePoints)
@@ -180,4 +181,5 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(11, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+# for  i in range(0, 14):
+execute(14, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
