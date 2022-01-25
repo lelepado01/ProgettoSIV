@@ -1,4 +1,3 @@
-
 from cv2 import selectROI
 import numpy as np
 import cv2
@@ -29,6 +28,14 @@ def monotonize(x,y):
     else:
         return get_splitted_lists(dec)
 
+def get_monotonize_ignored_points(xls : list, yls : list):
+    (mx, my) = monotonize(xls, yls)
+
+    x_remaining = [x for x in xls if x not in mx]
+    y_remaining = [y for y in yls if y not in my]
+
+    return (x_remaining,  y_remaining)
+
 def correct_y(x_list,y_list):
     min_value = min(y_list)
     min_index = y_list.index(min_value)
@@ -43,29 +50,37 @@ def correct_y(x_list,y_list):
     return (x_list,y_list)
 
 
-def evaluate_shot(pts_found, pts_line): 
+def evaluate_shot(pts_found):
+    (x_list, y_list) = get_splitted_lists(pts_found)
+    (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
+    
+    pts_ignored = [(x, y) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
+    pts_line = calculate_curve(pts_found)
+
     total_variance = 0
 
-    pts_found.reverse()
+    pts_ignored.reverse()
     pts_line.reverse()
-    for ptf in pts_found: 
-        for ptl in pts_line: 
-            if ptl[0] == ptf[0]: 
-                if ptl[1] == ptf[1]:
-                    return total_variance
-                total_variance += pow(ptl[1] - ptf[1], 2) # calc point variance
-                break                
+    for (ptf_x, ptf_y) in pts_ignored: 
+        for (ptl_x, ptl_y) in pts_line: 
+            if ptl_x == ptf_x: 
+                total_variance += pow(ptl_y - ptf_y, 2) # calculate point variance
+                break
             
-    return total_variance
+    if total_variance / (len(pts_ignored)+1) < 5: 
+        print("Airball")
+    elif total_variance / (len(pts_ignored)+1) < 33600: 
+        print("Score")
+    else: 
+        print("Miss")
 
 
 def calculate_curve(pts): 
     # divide x and y lists    
-    x_list = [item[0] for item in pts]
-    y_list = [item[1] for item in pts]
-
+    (x_list, y_list) = get_splitted_lists(pts)
     # monotonize x axis
     (x_list,y_list) = monotonize(x_list, y_list)
+    # monotonize y axis
     (x_list,y_list) = correct_y(x_list,y_list)
 
     if len(x_list) < 3  or len(y_list) < 3: 
@@ -73,16 +88,16 @@ def calculate_curve(pts):
 
     f = interpolate.interp1d(x_list, y_list, kind='linear', fill_value='extrapolate')
 
-    x_min = min(x_list)
-    x_max = max(x_list)
-
     # predict 20% of line length in px
-    x_len=abs(x_max-x_min)
+    x_min = min(x_list)
+    x_max = max(x_list)    
+    x_len = abs(x_max-x_min)
     predicted_line_length = 0.2*x_len
     
+    # predict new points for line (x axis)
     x_points = np.arange(x_min - predicted_line_length, x_max + predicted_line_length, 1)
-
-    return [(x_pt, f(x_pt)) for x_pt in x_points]
+    # use interpolate output function to calculate y value of point
+    return [(int(x_pt), int(f(x_pt))) for x_pt in x_points]
 
 
 def get_area_from_keypoint(keypoint : cv2.KeyPoint): 
@@ -90,20 +105,23 @@ def get_area_from_keypoint(keypoint : cv2.KeyPoint):
     size = keypoint.size * 3
     return (int(x - size / 2), int(y -size / 2), int(size), int(size))
 
+
 def show_final_image(pts_list, frame): 
     # Final frame is used to display all points and curve
     # We can choose how many points (from the end of the list) 
     # to ignore, becouse often the ball changes trajectory
     du.draw_line(frame, calculate_curve(pts_list))
     du.draw_points(frame, pts_list)
-    cv2.imshow('Final Interpolated function', frame)
 
-def get_frame(video_path, index): 
-    video = cv2.VideoCapture(video_path)
-    # last_frame_num = video.get(cv2.CAP_PROP_FRAME_COUNT)-1
-    video.set(cv2.CAP_PROP_POS_FRAMES, int(index))
-    ret, frame = video.read()
-    return frame
+    # Optional: 
+    # Draw points excluded from monotonize func, 
+    # used to calculate variance
+    (x_list, y_list) = get_splitted_lists(pts_list)
+    (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
+    pts_ignored = [(x, y) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
+    du.draw_points(frame, pts_ignored, color=(0,0,255))
+
+    cv2.imshow('Final Interpolated function', frame)
 
 
 def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, save_res = True, select_area = False):
@@ -174,7 +192,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         cv2.destroyWindow('Frame by frame calculations')
 
     if show_res: 
-        print(evaluate_shot(currentFramePoints, calculate_curve(currentFramePoints)))
+        evaluate_shot(currentFramePoints)
 
         ret, frame = videoPlayer.getLastVideoFrame()
         if ret:
@@ -206,7 +224,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(6, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(5, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
 # VIDEO State: 
 # 
