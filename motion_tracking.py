@@ -206,9 +206,9 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(11, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(6, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
-# VIDEO Params state: 
+# VIDEO State: 
 # 
 # 1 NO
 # 2 No (qualcosa)
