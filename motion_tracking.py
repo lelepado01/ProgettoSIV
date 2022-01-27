@@ -9,26 +9,30 @@ import draw_utils as du
 from PointList import PointList
 from VideoPlayer import VideoPlayer
 
-# UTILS
-def split_tuple_list(list):
-    x_list = [x for (x, _) in list] 
-    y_list = [y for (_, y) in list] 
-    return (x_list,y_list)  
+WINDOW_NAME = 'Frame by frame calculations'
 
-def monotonize(x,y):
-    inc=[(x[0],y[0])]
-    dec=[(x[0],y[0])]
-    for i in range(len(x)-1):
-        if x[i+1]>x[i]:
-            inc.append((x[i+1],y[i+1]))
-        elif x[i+1]<x[i]:
-            dec.append((x[i+1],y[i+1]))
+# UTILS
+def split_tuple_list(ls : list) -> list:
+    x_list = [x for (x, _) in ls] 
+    y_list = [y for (_, y) in ls] 
+    return (x_list, y_list)  
+
+def monotonize(xls : list, yls : list) -> list:
+    inc=[(xls[0],yls[0])]
+    dec=[(xls[0],yls[0])]
+
+    for i in range(len(xls)-1):
+        if xls[i+1] > xls[i]:
+            inc.append((xls[i+1], yls[i+1]))
+        elif xls[i+1] < xls[i]:
+            dec.append((xls[i+1], yls[i+1]))
+    
     if len(inc)>len(dec):
         return split_tuple_list(inc)
     else:
         return split_tuple_list(dec)
 
-def get_monotonize_ignored_points(xls : list, yls : list):
+def get_monotonize_ignored_points(xls : list, yls : list) -> list:
     (mx, my) = monotonize(xls, yls)
 
     x_remaining = [x for x in xls if x not in mx]
@@ -36,7 +40,7 @@ def get_monotonize_ignored_points(xls : list, yls : list):
 
     return (x_remaining,  y_remaining)
 
-def correct_y(x_list,y_list):
+def correct_y(x_list : list, y_list : list) -> list:
     min_value = min(y_list)
     min_index = y_list.index(min_value)
     if min_index != (len(y_list) - 1) and min_index!=0:
@@ -139,6 +143,7 @@ def save_final_image(frame, pts, tracker_type, video_path):
     cv2.imwrite(image_path,frame)
     print("Saved: "+image_path)
 
+
 def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, save_res = True, select_area = False):
     # Source video
     video_path = 'video/ft'+str(video_n) + ".mp4"
@@ -184,16 +189,14 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 
             currentFramePoints = pointList.getPointsAtFrame(frameIndex)
 
-            # Display all points from the calculated curve
-            # Try except to remove from the list the duplicate points 
-            # (a duplicate can only be the last point in the list, just remove it)
-            du.draw_area(frame, (x, y, w, h))
-            du.draw_line(frame, calculate_curve(currentFramePoints))
-
             if show_exec:
+                # Display area used to track ball
+                du.draw_area(frame, (x, y, w, h))
+                # Display all points from the calculated curve
+                du.draw_line(frame, calculate_curve(currentFramePoints))
                 # Display all points found by the motion tracker
                 du.draw_points(frame, currentFramePoints)
-                cv2.imshow('Frame by frame calculations', frame)        
+                cv2.imshow(WINDOW_NAME, frame)        
 
         k = cv2.waitKey(30) & 0xff
         
@@ -204,7 +207,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 
 
     if show_exec:
-        cv2.destroyWindow('Frame by frame calculations')
+        cv2.destroyWindow(WINDOW_NAME)
 
     if show_res: 
         evaluate_shot(currentFramePoints)
@@ -212,6 +215,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         ret, frame = videoPlayer.getLastVideoFrame()
         if ret:
             show_final_image(currentFramePoints, frame)
+            cv2.waitKey()
 
     if save_res:
         ret, frame = videoPlayer.getVideoFrame(1)
@@ -223,8 +227,6 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         
         if not show_res: 
             return 
-        
-    cv2.waitKey()
 
     videoPlayer.destroy()
     
@@ -235,7 +237,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(15, Tracker.CSRT, show_exec=True, show_res=True, save_res=True, select_area=False)
+execute(14, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
 # VIDEO State: 
 # 
@@ -243,16 +245,13 @@ execute(15, Tracker.CSRT, show_exec=True, show_res=True, save_res=True, select_a
 # 2 No (qualcosa)
 # 4 Si
 # 5 Si
-# 6 Si (Non completamente)
-# 8 Si (Previsione Errata)
+# 6 Si (Non completamente) (Tracker trova la palla appena passa sopra la zona di tetto bianca)
+# 8 Si (Previsione Errata) (Perchè il tracker perde la palla dopo che ha toccato il ferro)
 # 9 Si
-# 10 Si (Non completamente)
 # 11 No
 # 12 No
-# 13 No
-# 14 Si 
+# 14 Si (anche qui trova la palla appena passa oltre l'albero)
 # 15 Si (Previsione Errata) (Ha senso perchè la palla segue molto la traiettoria che ha fatto per arrivare a canestro)
                             # Per aggiustare bisognerebbe calcolare la varianza temporalmente, e non in base alla posizione lungo asse delle x
                             # Temporalmente nel senso che se il punto è rimosso da monotonize() va confrontato con un punto della linea stimata, 
                             # non con quello che ha x uguale
-# 6 e 10 sono molto simili
