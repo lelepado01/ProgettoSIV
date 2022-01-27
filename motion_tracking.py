@@ -220,7 +220,9 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         du.draw_points(frame, currentFramePoints)
 
         save_final_image(frame, currentFramePoints, tracker_type, "ft" + str(video_n))
-        return 
+        
+        if not show_res: 
+            return 
         
     cv2.waitKey()
 
@@ -233,7 +235,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(5, Tracker.CSRT, show_exec=False, show_res=False, save_res=True, select_area=False)
+execute(15, Tracker.CSRT, show_exec=True, show_res=True, save_res=True, select_area=False)
 
 # VIDEO State: 
 # 
@@ -248,5 +250,9 @@ execute(5, Tracker.CSRT, show_exec=False, show_res=False, save_res=True, select_
 # 11 No
 # 12 No
 # 13 No
-
+# 14 Si 
+# 15 Si (Previsione Errata) (Ha senso perchè la palla segue molto la traiettoria che ha fatto per arrivare a canestro)
+                            # Per aggiustare bisognerebbe calcolare la varianza temporalmente, e non in base alla posizione lungo asse delle x
+                            # Temporalmente nel senso che se il punto è rimosso da monotonize() va confrontato con un punto della linea stimata, 
+                            # non con quello che ha x uguale
 # 6 e 10 sono molto simili
