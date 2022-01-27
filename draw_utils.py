@@ -6,13 +6,8 @@ POINT_COLOR = (8,255,255)
 RECT_COLOR = (255, 0,255)
 
 def draw_points(frame, pts_list, color = POINT_COLOR): 
-    l = len(pts_list)
     for (x, y) in pts_list:  
-        l-=1
         cv2.circle(frame, (int(x), int(y)), 1, color, 5)
-        if l == 0: 
-            cv2.circle(frame, (int(x), int(y)), 1, (255,0,255), 5)
-
 
 def draw_line(frame, pts_list):
     for (x, y) in pts_list: 

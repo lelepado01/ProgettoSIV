@@ -3,9 +3,31 @@
 #### Basketball tracking
 The project consists in finding and tracing the position of a basketball shot from the free throw line.
 
+We chose some video of people shooting a basketball, trying to select ones with an unmoving camera and a clean background. As it turns out, not many videos online have these properties.
+It is possible to change the video analyzed with the parameter *video_number* of the function *execute()*.
+
+Our first idea was to use a **Yolo classifier** to identify the position of the ball and track it accurately however, we soon realized we could get away with a much simpler **Blob Detector**, which selects groups of pixels with similar properties.
+Experimenting with the parameters, we were mostly succesful in identifying the basketball. 
+
+In the instances where the Simple Blob Detector fails, we still made possible the selection of the ball, toggling the property *select_area* of the function *execute()*.
+
+Once the first instance of the basketball is found, we made use of a **Motion Tracker** to trace the object frame by frame.
+Since many different object tracker were available, we allowed switching between them using the parameter *tracker_type* of the function *execute()*.
+
+All the points found during the shot are used to calculate the trajectory of the ball, using **linear interpolation**. 
+Since the ball most of the times hits the rim, it's trajectory will change. To prevent excessive swings in the calculated preview, we removed all the points where the x axis value isn't monotonic.
+For example, if at time *t*, the ball has x value *100* and is going towards the right, we remove  any points at time later than *t* that have value smaller than *100*.
+This adjustment is only necessary during the estimation of the trajectory. 
+
+To determine whether the shot ended in a score or a miss, we were planning to find the basket position. However, we found extremely difficult pin-pointing this object, as in all videos is always still, and the colorful environment made it tough to use color recognition.
+
+To still be able to give an approximation of the probability of success, without resorting to a machine learning approach, we calculated the **variance** between the points from the ideal trajectory (the one we estimated) and the points from the actual movement of the ball. 
+We used the points that were removed from the trajectory calculation becouse not monotonic, 
+TODO (devo implementare questo pezzo di algoritmo, se volete aggiungete pure altro)
+
 #### TODO
  - [ ] Custom parameters for each video (file parameter_utils.py)
  - [ ] calculate_curve() in motion_tracking.py sometimes catches wrong y position  
-    (es. video 10)
- - [x] Try to make work evaluate_shot() somehow
- - [x] Division by zero check in calculate_curve()
+    (es. video 1) @Giorgio prova a capirci qualcosa pliz, a me sembra giusto
+ - [ ] Try to make work evaluate_shot() work with temporal variance
+ - [ ] Check for typo and bad english in explanation above
