@@ -10,7 +10,7 @@ from PointList import PointList
 from VideoPlayer import VideoPlayer
 
 # UTILS
-def get_splitted_lists(list):
+def split_tuple_list(list):
     x_list = [x for (x, _) in list] 
     y_list = [y for (_, y) in list] 
     return (x_list,y_list)  
@@ -24,9 +24,9 @@ def monotonize(x,y):
         elif x[i+1]<x[i]:
             dec.append((x[i+1],y[i+1]))
     if len(inc)>len(dec):
-        return get_splitted_lists(inc)
+        return split_tuple_list(inc)
     else:
-        return get_splitted_lists(dec)
+        return split_tuple_list(dec)
 
 def get_monotonize_ignored_points(xls : list, yls : list):
     (mx, my) = monotonize(xls, yls)
@@ -51,10 +51,10 @@ def correct_y(x_list,y_list):
 
 
 def evaluate_shot(pts_found):
-    (x_list, y_list) = get_splitted_lists(pts_found)
+    (x_list, y_list) = split_tuple_list(pts_found)
     (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
     
-    pts_ignored = [(x, y) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
+    pts_ignored = [(int(x), int(y)) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
     pts_line = calculate_curve(pts_found)
 
     total_variance = 0
@@ -64,9 +64,10 @@ def evaluate_shot(pts_found):
     for (ptf_x, ptf_y) in pts_ignored: 
         for (ptl_x, ptl_y) in pts_line: 
             if ptl_x == ptf_x: 
-                total_variance += pow(ptl_y - ptf_y, 2) # calculate point variance
+                total_variance += pow(ptl_y - ptf_y, 2) + pow(ptl_x - ptf_x, 2) # calculate point variance
                 break
             
+    print("Variance Calculated: " + str(total_variance))
     if total_variance / (len(pts_ignored)+1) < 5: 
         print("Airball")
     elif total_variance / (len(pts_ignored)+1) < 33600: 
@@ -77,13 +78,15 @@ def evaluate_shot(pts_found):
 
 def calculate_curve(pts): 
     # divide x and y lists    
-    (x_list, y_list) = get_splitted_lists(pts)
+    (x_list, y_list) = split_tuple_list(pts)
     # monotonize x axis
     (x_list,y_list) = monotonize(x_list, y_list)
     # monotonize y axis
     (x_list,y_list) = correct_y(x_list,y_list)
 
-    if len(x_list) < 3  or len(y_list) < 3: 
+    # At least 3 points are needed for interp1d()
+    # Not done before becouse monotonize removes some points 
+    if len(x_list) < 3 or len(y_list) < 3: 
         return []
 
     f = interpolate.interp1d(x_list, y_list, kind='linear', fill_value='extrapolate')
@@ -96,8 +99,9 @@ def calculate_curve(pts):
     
     # predict new points for line (x axis)
     x_points = np.arange(x_min - predicted_line_length, x_max + predicted_line_length, 1)
+    
     # use interpolate output function to calculate y value of point
-    return [(int(x_pt), int(f(x_pt))) for x_pt in x_points]
+    return [(int(x_pt), int(f(x_pt))) for x_pt in x_points if not np.isinf(f(x_pt)) and not np.isnan(f(x_pt))]
 
 
 def get_area_from_keypoint(keypoint : cv2.KeyPoint): 
@@ -116,13 +120,24 @@ def show_final_image(pts_list, frame):
     # Optional: 
     # Draw points excluded from monotonize func, 
     # used to calculate variance
-    (x_list, y_list) = get_splitted_lists(pts_list)
+    (x_list, y_list) = split_tuple_list(pts_list)
     (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
     pts_ignored = [(x, y) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
     du.draw_points(frame, pts_ignored, color=(0,0,255))
 
     cv2.imshow('Final Interpolated function', frame)
 
+
+def save_final_image(frame, pts, tracker_type, video_path):  
+    stat_str=""
+    for (x, y) in pts:  
+        stat_str="{}({},{})\n".format(stat_str,str(x),str(y))
+    stats_path="results/{}_{}.txt".format(Tracker.get_name(tracker_type),video_path)
+    image_path="results/{}_{}.png".format(Tracker.get_name(tracker_type),video_path)
+    with open(stats_path, "w") as f:
+        f.write("Number of points: {}\nPoints:\n{}".format(len(pts),stat_str))
+    cv2.imwrite(image_path,frame)
+    print("Saved: "+image_path)
 
 def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, save_res = True, select_area = False):
     # Source video
@@ -131,9 +146,8 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
     pointList = PointList()
     videoPlayer = VideoPlayer(video_path)
 
-    params = pu.get_blob_parameters_for_video(video_n)
-
     # INIZIALIZATIONS
+    params = pu.get_blob_parameters_for_video(video_n)
     tracker = Tracker.initialize_tracker(tracker_type)
     detector = cv2.SimpleBlobDetector_create(params)
 
@@ -164,6 +178,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
             ret, bbox = tracker.update(frame)
 
             if ret:
+                # Add current ball position to list
                 (x, y, w, h) = [int(v) for v in bbox]
                 pointList.addFrame(frameIndex, (x+w/2, y + h/2))
 
@@ -200,19 +215,13 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 
     if save_res:
         ret, frame = videoPlayer.getVideoFrame(1)
-        if not show_res:
-            du.draw_line(frame, calculate_curve(currentFramePoints))
-            du.draw_points(frame, currentFramePoints)
-        stat_str=""
-        for (x, y) in currentFramePoints:  
-            stat_str="{}({},{})\n".format(stat_str,str(x),str(y))
-        stats_path="results/{}_{}.txt".format(Tracker.get_name(tracker_type),video_path)
-        image_path="results/{}_{}.png".format(Tracker.get_name(tracker_type),video_path)
-        with open(stats_path, "w") as f:
-            f.write("Number of points: {}\nPoints:\n{}".format(len(currentFramePoints),stat_str))
-        cv2.imwrite(image_path,frame)
-        print("Saved: "+image_path)
+        #if not show_res:
+        du.draw_line(frame, calculate_curve(currentFramePoints))
+        du.draw_points(frame, currentFramePoints)
 
+        save_final_image(frame, currentFramePoints, tracker_type, "ft" + str(video_n))
+        return 
+        
     cv2.waitKey()
 
     videoPlayer.destroy()
@@ -224,17 +233,20 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(5, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(5, Tracker.CSRT, show_exec=False, show_res=False, save_res=True, select_area=False)
 
 # VIDEO State: 
 # 
-# 1 NO
+# 1 Si (Ci sono problemi nel calcolo della traiettoria)
 # 2 No (qualcosa)
 # 4 Si
 # 5 Si
-# 6 No (qualcosa)
-# 7 No
-# 8 No
+# 6 Si (Non completamente)
+# 8 Si (Previsione Errata)
 # 9 Si
-# 10 No (qualcosa)
+# 10 Si (Non completamente)
 # 11 No
+# 12 No
+# 13 No
+
+# 6 e 10 sono molto simili
