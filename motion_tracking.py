@@ -258,9 +258,9 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # show_execution: default to True, show real time tracking of the ball
 # show_result: default to True, show final tajectory in the frame
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
-#  execute(video, tracker, show_execution, show_result, save_result, select_area)
+# execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(15, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(3, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
 # VIDEO State: 
 # 
