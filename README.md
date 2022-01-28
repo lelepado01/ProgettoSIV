@@ -22,12 +22,15 @@ This adjustment is only necessary during the estimation of the trajectory.
 To determine whether the shot ended in a score or a miss, we were planning to find the basket position. However, we found extremely difficult pin-pointing this object, as in all videos is always still, and the colorful environment made it tough to use color recognition.
 
 To still be able to give an approximation of the probability of success, without resorting to a machine learning approach, we calculated the **variance** between the points from the ideal trajectory (the one we estimated) and the points from the actual movement of the ball. 
-We used the points that were removed from the trajectory calculation becouse not monotonic, 
-TODO (devo implementare questo pezzo di algoritmo, se volete aggiungete pure altro)
 
- <!-- # Per aggiustare bisognerebbe calcolare la varianza temporalmente, e non in base alla posizione lungo asse delle x
-   # Temporalmente nel senso che se il punto è rimosso da monotonize() va confrontato con un punto della linea stimata, 
-   # non con quello che ha x uguale -->
+First of all, we calculated the estimated ball direction as a vector, by subtracting the last point (extrapolated maximum) by the last position tracked.
+This vector also needs to be normalized, by doing this, we are able to multiply any distance by this direction vector, and obtain the new estimated ball position.
+
+![Distance Algorithm](distance_algorithm.png)
+
+Then, for all the points tracked after the ball hit the rim, we calculated the distance between the position given by the tracker, and the one estimated using the previously calculated direction.
+A missed shot will have a larger variance between tracked and estimated position, while an airball will have no difference, as the ball never leaves the trajectory. 
+This way we can differenciate, using two threshold, the outcome of the shot, without having to resort to machine learning, or having to identify the basket.
 
 ### Video List
 

@@ -20,3 +20,7 @@ def points_subtraction(pt1, pt2):
 
 def points_scalar_mult(pt, s): 
     return (pt[0] * s, pt[1] * s)
+
+def points_normalize(pt):
+    s = pt[0] + pt[1]
+    return (pt[0] / s, pt[1] / s)

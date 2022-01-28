@@ -1,4 +1,4 @@
-import numpy as np
+
 import cv2
 from scipy import interpolate
 
@@ -12,7 +12,7 @@ from VideoPlayer import VideoPlayer
 WINDOW_NAME = 'Frame by frame calculations'
 
 AIRBALL_THRESHOLD = 50
-SCORE_THRESHOLD = 10048000
+SCORE_THRESHOLD = 800
 
 def monotonize(xls : list, yls : list) -> list:
     inc=[(xls[0],yls[0])]
@@ -55,7 +55,7 @@ def correct_y(x_list : list, y_list : list) -> list:
     return (x_list,y_list)
 
 
-def evaluate_shot(pts_from_tracker : PointList, pts_calculated : PointList):
+def evaluate_shot(pts_from_tracker : PointList):
     pts_found = pts_from_tracker.getPointsAtLastFrame()
 
     (x_list, y_list) = fu.split_tuple_list(pts_found)
@@ -64,44 +64,40 @@ def evaluate_shot(pts_from_tracker : PointList, pts_calculated : PointList):
     pts_ignored = [(int(x), int(y)) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
     pts_line = calculate_curve(pts_found)
 
-    total_variance = 0
+    total_distance = 0
 
     pts_ignored.reverse()
     pts_line.reverse()
 
     if len(pts_ignored) == 0:
         print("Variance not calculated, ball never changes trajectory")
-        print("Airball") # ball never changes trajectory
+        print("Outcome: Airball") # ball never changes trajectory
         return 
 
-    # start_ignored_pts_frame_index = pts_from_tracker.getFrameOfPoint(pts_ignored[0])
-    # if start_ignored_pts_frame_index is None: 
-    #     print("Error")
-    #     return
-
     hypotetical_ball_dir = fu.points_subtraction(pts_line[0], pts_line[1]) # max - point hit rim
+    hypotetical_ball_dir = fu.points_normalize(hypotetical_ball_dir) # allows to multiply any length and get the new ball position after such length
     current_pt = pts_ignored[0]
+    dist = 0
     for i in range(1, len(pts_ignored)): 
-        dist = fu.points_distance(current_pt, pts_ignored[i]) # distance travelled from rim hit
+        current_to_next_point_distance = fu.points_distance(current_pt, pts_ignored[i])
+        # if the distance between two tracked points is 0, we don't want to count twice the same error
+        if current_to_next_point_distance == 0: 
+            continue
+        dist += current_to_next_point_distance # distance travelled from rim hit
         hypotetical_ball_pos = fu.points_scalar_mult(hypotetical_ball_dir, dist) # pos if ball didn't hit rim
-        total_variance += pow(current_pt[1] - hypotetical_ball_pos[1], 2) + pow(current_pt[0] - hypotetical_ball_pos[0], 2)
+        total_distance += fu.points_distance(current_pt, hypotetical_ball_pos) 
         current_pt = pts_ignored[i]
 
-    total_variance /= len(pts_ignored)+1
-
-    # for (ptf_x, ptf_y) in pts_ignored: 
-    #     for (ptl_x, ptl_y) in pts_line: 
-    #         if ptl_x == ptf_x: 
-    #             total_variance += pow(ptl_y - ptf_y, 2) + pow(ptl_x - ptf_x, 2) # calculate point variance
-    #             break
+    # calculate average distance over number of points, so a longer video doesn't influence the prediction
+    total_distance /= len(pts_ignored)
             
-    print("Variance Calculated: " + str(total_variance))
-    if total_variance < AIRBALL_THRESHOLD: 
-        print("Airball")
-    elif total_variance < SCORE_THRESHOLD: 
-        print("Score")
+    print("Distance calculated: " + str(total_distance))
+    if total_distance < AIRBALL_THRESHOLD: 
+        print("Outcome: Airball")
+    elif total_distance < SCORE_THRESHOLD: 
+        print("Outcome: Score")
     else: 
-        print("Miss")
+        print("Outcome: Miss")
 
 
 def calculate_curve(pts, extrapolate=True): 
@@ -251,7 +247,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         # add max to points
         frameIndex += 1
         pointsInCalculatedCurve.addFrame(frameIndex, calculated_curve[len(calculated_curve)-1])
-        evaluate_shot(pointList, pointsInCalculatedCurve)
+        evaluate_shot(pointList)
 
         ret, frame = videoPlayer.getLastVideoFrame()
         if ret:
@@ -275,4 +271,4 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # show_result: default to True, show final tajectory in the frame
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 # execute(video_number, tracker_type, show_execution, show_result, save_result, select_area)
-execute(1, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(4, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
