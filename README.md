@@ -25,9 +25,25 @@ To still be able to give an approximation of the probability of success, without
 We used the points that were removed from the trajectory calculation becouse not monotonic, 
 TODO (devo implementare questo pezzo di algoritmo, se volete aggiungete pure altro)
 
+ <!-- # Per aggiustare bisognerebbe calcolare la varianza temporalmente, e non in base alla posizione lungo asse delle x
+   # Temporalmente nel senso che se il punto è rimosso da monotonize() va confrontato con un punto della linea stimata, 
+   # non con quello che ha x uguale -->
+
+### Video List
+
+- 1: Ball tracked, outcome classified correctly
+- 2: Ball is not found right away, the blob detector has problems identifying the ball, once it finds it, the motion tracker has problems maintaining sight, probably becouse of the bottom view of the rim.
+- 3: Ball tracked, outcome classified correctly
+- 4: Ball tracked, outcome classified correctly
+- 5: Ball not tracked right away, the blob detector seems to have problems, probably becouse of the different coloring of the ball passing across a background full of objects. As soon as the ball goes on top the white roof section, the blob detector is able to identify it.
+- 6 Ball tracked, outcome classified correctly 
+- 7 Ball tracked, outcome classified correctly
+- 8 Ball is tracked as soon as it passes on top of the white background. The blob detector is probably not able to find it in front of the tree.
+- 9 Ball tracked, outcome classified incorrectly
+
 #### TODO
  - [ ] Custom parameters for each video (file parameter_utils.py)
- - [ ] calculate_curve() in motion_tracking.py sometimes catches wrong y position  
-    (es. video 1) @Giorgio prova a capirci qualcosa pliz, a me sembra giusto
+ - [x] calculate_curve() in motion_tracking.py sometimes catches wrong y position  
+    (es. video 1)
  - [ ] Try to make work evaluate_shot() work with temporal variance
  - [ ] Check for typo and bad english in explanation above

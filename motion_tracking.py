@@ -268,20 +268,3 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # execute(video, tracker, show_execution, show_result, save_result, select_area)
 
 execute(9, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
-
-# VIDEO State: 
-# 
-# 1 Si (Ci sono problemi nel calcolo della traiettoria)
-# 2 No (qualcosa)
-# 4 Si
-# 5 Si
-# 6 Si (Non completamente) (Tracker trova la palla appena passa sopra la zona di tetto bianca)
-# 8 Si (Previsione Errata) (Perchè il tracker perde la palla dopo che ha toccato il ferro)
-# 9 Si
-# 11 No
-# 12 No
-# 14 Si (anche qui trova la palla appena passa oltre l'albero)
-# 15 Si (Previsione Errata) (Ha senso perchè la palla segue molto la traiettoria che ha fatto per arrivare a canestro)
-                            # Per aggiustare bisognerebbe calcolare la varianza temporalmente, e non in base alla posizione lungo asse delle x
-                            # Temporalmente nel senso che se il punto è rimosso da monotonize() va confrontato con un punto della linea stimata, 
-                            # non con quello che ha x uguale
