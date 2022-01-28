@@ -32,7 +32,7 @@ def get_monotonize_ignored_points(xls : list, yls : list) -> list:
     x_remaining = [x for x in xls if x not in mx]
     y_remaining = [y for y in yls if y not in my]
 
-    return (x_remaining,  y_remaining)
+    return (x_remaining, y_remaining)
 
 def correct_y(x_list : list, y_list : list) -> list:
     min_value = min(y_list)
@@ -61,6 +61,14 @@ def evaluate_shot(pts_from_tracker : PointList, pts_calculated : PointList):
 
     pts_ignored.reverse()
     pts_line.reverse()
+
+    start_ignored_pts_frame_index = pts_from_tracker.getFrameOfPoint(pts_ignored[0])
+    if start_ignored_pts_frame_index is None: 
+        print("Error")
+        return
+
+    
+
     for (ptf_x, ptf_y) in pts_ignored: 
         for (ptl_x, ptl_y) in pts_line: 
             if ptl_x == ptf_x: 
@@ -248,7 +256,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(1, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(15, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
 # VIDEO State: 
 # 

@@ -1,15 +1,14 @@
 
-import cv2
-
 class PointList: 
 
     def __init__(self) -> None:
         self.pointPerFrameDictionary = {}
 
     def addFrame(self, frameIndex, point_added_at_frame):  
-        if len(self.pointPerFrameDictionary) > 0 and list(self.pointPerFrameDictionary.items())[-1] == point_added_at_frame:
+        (ptx, pty) = point_added_at_frame
+        if len(self.pointPerFrameDictionary) > 0 and list(self.pointPerFrameDictionary.items())[-1] == (int(ptx), int(pty)):
             return # Duplicate point
-        self.pointPerFrameDictionary[frameIndex] = point_added_at_frame
+        self.pointPerFrameDictionary[frameIndex] = (int(ptx), int(pty))
 
     def getPointsAtFrame(self, frameIndex): 
         pts_at_frame = []
@@ -26,3 +25,8 @@ class PointList:
             pts_at_frame.append(pt)
 
         return pts_at_frame
+
+    def getFrameOfPoint(self, point): 
+        if point not in self.pointPerFrameDictionary.keys(): 
+            return None
+        return self.pointPerFrameDictionary[point]
