@@ -1,4 +1,3 @@
-from cv2 import selectROI
 import numpy as np
 import cv2
 from scipy import interpolate
@@ -100,9 +99,16 @@ def calculate_curve(pts, extrapolate=True):
         x_min -= predicted_line_length
         x_max += predicted_line_length
         
-        # predict new points for line (x axis)
-    x_points = np.arange(x_min, x_max, 1)
-    
+    # predict new points for line (x axis)
+    x_points = x_list 
+    # add (in correct order) min and max extrapolated points
+    if extrapolate: 
+        if x_min < x_points[0]: 
+            x_list.append(x_max)
+            x_list.insert(0, x_min)
+        else: 
+            x_list.append(x_min)
+            x_list.insert(0, x_max)
     # use interpolate output function to calculate y value of point
     return [(int(x_pt), int(f(x_pt))) for x_pt in x_points if not np.isinf(f(x_pt)) and not np.isnan(f(x_pt))]
 
@@ -156,7 +162,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
     # Tracking initilization according to identification point
     if select_area: 
         ret, frame = videoPlayer.getNextVideoFrame()
-        ball_area = selectROI(frame)
+        ball_area = cv2.selectROI(frame)
     else: 
         (frame, initial_keypoint) = videoPlayer.get_initial_ball_position(detector)
         if initial_keypoint == (0,0,0,0): 
@@ -230,7 +236,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(1, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(11, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
 # VIDEO State: 
 # 
