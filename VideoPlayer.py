@@ -35,7 +35,7 @@ class VideoPlayer:
             ret, frame = self.video.read()
             if not ret:
                 print("---\nBall not found\n---")
-                return (frame, (0,0,0,0)) 
+                return (None, None) 
             initial_keypoint = detector.detect(frame)
 
         return (frame, initial_keypoint[0])

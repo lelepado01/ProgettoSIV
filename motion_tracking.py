@@ -27,16 +27,20 @@ def monotonize(xls : list, yls : list) -> list:
         return fu.split_tuple_list(dec)
 
 def get_monotonize_ignored_points(xls : list, yls : list) -> list:
-    (mx, my) = monotonize(xls, yls)
+    (mx, _) = monotonize(xls, yls)
 
-    x_remaining = [x for x in xls if x not in mx]
-    y_remaining = [y for y in yls if y not in my]
+    x_remaining = []
+    y_remaining = []
+    for i in range(len(xls)): 
+        if xls[i] not in mx: 
+            x_remaining.append(xls[i])
+            # has to be done this way, x axis is univoque, while y can be duplicated
+            y_remaining.append(yls[i])
 
     return (x_remaining, y_remaining)
 
 def correct_y(x_list : list, y_list : list) -> list:
-    min_value = min(y_list)
-    min_index = y_list.index(min_value)
+    min_index = y_list.index(min(y_list))
     if min_index != (len(y_list) - 1) and min_index!=0:
         y_head = y_list[:min_index]
         x_head = x_list[:min_index]
@@ -123,33 +127,31 @@ def calculate_curve(pts, extrapolate=True):
         if x_points[0] < x_points[len(x_points)-1]: 
             x_list.append(x_max)
             x_list.insert(0, x_min)
+
+            y_list.append(int(f(x_max)))
+            y_list.insert(0, int(f(x_min)))
         else: 
             x_list.append(x_min)
             x_list.insert(0, x_max)
-    # use interpolate output function to calculate y value of point
-    return [(int(x_pt), int(f(x_pt))) for x_pt in x_points if not np.isinf(f(x_pt)) and not np.isnan(f(x_pt))]
 
+            y_list.append(int(f(x_min)))
+            y_list.insert(0, int(f(x_max)))
+
+    return [(int(x), int(y)) for x,y in zip(x_list, y_list)]
 
 def show_final_image(pts_list, frame): 
     # Final frame is used to display all points and curve
-    # We can choose how many points (from the end of the list) 
-    # to ignore, becouse often the ball changes trajectory
     du.draw_line(frame, calculate_curve(pts_list))
     du.draw_points(frame, pts_list)
 
-    # Optional: 
-    # Draw points excluded from monotonize func, 
-    # used to calculate variance
+    # Draw points excluded from monotonize func, used to calculate variance
     (x_list, y_list) = fu.split_tuple_list(pts_list)
+
     (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
-
-    indices = [i for i, x in enumerate(pts_list) if x[0] in pts_ignored_x]
-    pts_ignored_y = [pts_list[index][1] for index in indices]
-
     pts_ignored = [(x, y) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
     du.draw_points(frame, pts_ignored, color=(0,0,255))
 
-    cv2.imshow('Final Interpolated function', frame)
+    cv2.imshow(WINDOW_NAME, frame)
 
 
 def save_final_image(frame, pts, tracker_type, video_path):  
@@ -166,7 +168,7 @@ def save_final_image(frame, pts, tracker_type, video_path):
 
 def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, save_res = True, select_area = False):
     # Source video
-    video_path = 'video/ft'+str(video_n) + ".mp4"
+    video_path = 'video/ft' + str(video_n) + ".mp4"
 
     pointList = PointList()
     pointsInCalculatedCurve = PointList()
@@ -187,7 +189,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         ball_area = cv2.selectROI(frame)
     else: 
         (frame, initial_keypoint) = videoPlayer.get_initial_ball_position(detector)
-        if initial_keypoint == (0,0,0,0): 
+        if initial_keypoint is None: 
             return
         ball_area = fu.get_area_from_keypoint(initial_keypoint)
 
@@ -206,7 +208,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
             if ret:
                 # Add current ball position to list
                 (x, y, w, h) = [int(v) for v in bbox]
-                pointList.addFrame(frameIndex, (int(x+w/2), int(y + h/2)))
+                pointList.addFrame(frameIndex, (x+w/2, y + h/2))
 
             currentFramePoints = pointList.getPointsAtFrame(frameIndex)
             
@@ -228,7 +230,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         k = cv2.waitKey(30) & 0xff
         
         if k == 27: # ESC
-            break 
+            exit(0) 
         if k == 32: # SPACE
             paused = not paused
 
@@ -249,7 +251,6 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 
     if save_res:
         ret, frame = videoPlayer.getVideoFrame(1)
-        #if not show_res:
         du.draw_line(frame, calculate_curve(currentFramePoints))
         du.draw_points(frame, currentFramePoints)
 
@@ -258,13 +259,11 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         if not show_res: 
             return 
 
-    videoPlayer.destroy()
-    
+    videoPlayer.destroy()    
     cv2.destroyAllWindows()
 
 # show_execution: default to True, show real time tracking of the ball
 # show_result: default to True, show final tajectory in the frame
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
-# execute(video, tracker, show_execution, show_result, save_result, select_area)
-
+# execute(video_number, tracker_type, show_execution, show_result, save_result, select_area)
 execute(9, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
