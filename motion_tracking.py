@@ -22,9 +22,9 @@ def monotonize(xls : list, yls : list) -> list:
     dec=[(xls[0],yls[0])]
 
     for i in range(len(xls)-1):
-        if xls[i+1] > xls[i]:
+        if xls[i+1] > xls[i] and xls[i+1] >= max(inc)[0]:
             inc.append((xls[i+1], yls[i+1]))
-        elif xls[i+1] < xls[i]:
+        elif xls[i+1] < xls[i] and xls[i+1] <= min(dec)[0]:
             dec.append((xls[i+1], yls[i+1]))
     
     if len(inc)>len(dec):
@@ -237,7 +237,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(14, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(1, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
 # VIDEO State: 
 # 
