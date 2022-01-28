@@ -127,6 +127,10 @@ def show_final_image(pts_list, frame):
     # used to calculate variance
     (x_list, y_list) = fu.split_tuple_list(pts_list)
     (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
+
+    indices = [i for i, x in enumerate(pts_list) if x[0] in pts_ignored_x]
+    pts_ignored_y = [pts_list[index][1] for index in indices]
+
     pts_ignored = [(x, y) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
     du.draw_points(frame, pts_ignored, color=(0,0,255))
 
@@ -248,7 +252,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(1, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(15, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
 # VIDEO State: 
 # 
