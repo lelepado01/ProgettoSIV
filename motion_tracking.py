@@ -113,12 +113,12 @@ def calculate_curve(pts, extrapolate=True):
     x_points = x_list 
     # add (in correct order) min and max extrapolated points
     if extrapolate: 
-        if x_min < x_points[0]: 
-            x_list.append(x_min)
-            x_list.insert(0, x_max)
-        else: 
+        if x_points[0] < x_points[len(x_points)-1]: 
             x_list.append(x_max)
             x_list.insert(0, x_min)
+        else: 
+            x_list.append(x_min)
+            x_list.insert(0, x_max)
     # use interpolate output function to calculate y value of point
     return [(int(x_pt), int(f(x_pt))) for x_pt in x_points if not np.isinf(f(x_pt)) and not np.isnan(f(x_pt))]
 
@@ -260,7 +260,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 # execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(3, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(9, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
 # VIDEO State: 
 # 
