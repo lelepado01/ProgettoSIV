@@ -29,6 +29,12 @@ def get_blob_parameters_for_video(video_n):
         params.filterByConvexity = True
         params.minConvexity = 0.01
 
+    if video_n == 3: 
+        params.filterByCircularity = True
+        params.minCircularity = 0.8
+        params.filterByConvexity = True
+        params.minConvexity = 0.01
+
     if video_n == 4: 
         params.filterByCircularity = True
         params.minCircularity = 0.8
@@ -37,42 +43,18 @@ def get_blob_parameters_for_video(video_n):
 
     if video_n == 5: 
         params.filterByCircularity = True
-        params.minCircularity = 0.8
-        params.filterByConvexity = True
-        params.minConvexity = 0.01
-
-    if video_n == 6: 
-        params.filterByCircularity = True
         params.minCircularity = 0.7
         params.filterByConvexity = True
         params.minConvexity = 0.01
         params.filterByInertia = True
         params.minInertiaRatio = 0.8
 
-    if video_n == 8: 
+    if video_n == 6: 
         params.filterByCircularity = True
         params.minCircularity = 0.4
         params.filterByConvexity = True
         params.minConvexity = 0.1
         params.filterByInertia = True
         params.minInertiaRatio = 0.1
-
-    if video_n == 12: 
-        params.filterByColor = False 
-        params.filterByCircularity = True
-        params.minCircularity = 0.7
-        params.filterByConvexity = True
-        params.minConvexity = 0.1
-        params.filterByInertia = True
-        params.minInertiaRatio = 0.5
-
-    if video_n == 13: 
-        params.filterByCircularity = True
-        params.minCircularity = 0.4
-        params.filterByConvexity = True
-        params.minConvexity = 0.4
-        params.filterByInertia = True
-        params.minInertiaRatio = 0.4
-        params.minArea = 400
 
     return params
