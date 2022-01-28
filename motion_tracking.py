@@ -6,16 +6,11 @@ from scipy import interpolate
 from tracker_types import Tracker
 import parameter_utils as pu
 import draw_utils as du
+import function_utils as fu
 from PointList import PointList
 from VideoPlayer import VideoPlayer
 
 WINDOW_NAME = 'Frame by frame calculations'
-
-# UTILS
-def split_tuple_list(ls : list) -> list:
-    x_list = [x for (x, _) in ls] 
-    y_list = [y for (_, y) in ls] 
-    return (x_list, y_list)  
 
 def monotonize(xls : list, yls : list) -> list:
     inc=[(xls[0],yls[0])]
@@ -28,9 +23,9 @@ def monotonize(xls : list, yls : list) -> list:
             dec.append((xls[i+1], yls[i+1]))
     
     if len(inc)>len(dec):
-        return split_tuple_list(inc)
+        return fu.split_tuple_list(inc)
     else:
-        return split_tuple_list(dec)
+        return fu.split_tuple_list(dec)
 
 def get_monotonize_ignored_points(xls : list, yls : list) -> list:
     (mx, my) = monotonize(xls, yls)
@@ -55,7 +50,7 @@ def correct_y(x_list : list, y_list : list) -> list:
 
 
 def evaluate_shot(pts_found):
-    (x_list, y_list) = split_tuple_list(pts_found)
+    (x_list, y_list) = fu.split_tuple_list(pts_found)
     (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
     
     pts_ignored = [(int(x), int(y)) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
@@ -80,9 +75,9 @@ def evaluate_shot(pts_found):
         print("Miss")
 
 
-def calculate_curve(pts): 
+def calculate_curve(pts, extrapolate=True): 
     # divide x and y lists    
-    (x_list, y_list) = split_tuple_list(pts)
+    (x_list, y_list) = fu.split_tuple_list(pts)
     # monotonize x axis
     (x_list,y_list) = monotonize(x_list, y_list)
     # monotonize y axis
@@ -95,23 +90,21 @@ def calculate_curve(pts):
 
     f = interpolate.interp1d(x_list, y_list, kind='linear', fill_value='extrapolate')
 
-    # predict 20% of line length in px
     x_min = min(x_list)
     x_max = max(x_list)    
-    x_len = abs(x_max-x_min)
-    predicted_line_length = 0.2*x_len
-    
-    # predict new points for line (x axis)
-    x_points = np.arange(x_min - predicted_line_length, x_max + predicted_line_length, 1)
+    if extrapolate: 
+        # predict 20% of line length in px
+        x_len = abs(x_max-x_min)
+        predicted_line_length = 0.2*x_len
+
+        x_min -= predicted_line_length
+        x_max += predicted_line_length
+        
+        # predict new points for line (x axis)
+    x_points = np.arange(x_min, x_max, 1)
     
     # use interpolate output function to calculate y value of point
     return [(int(x_pt), int(f(x_pt))) for x_pt in x_points if not np.isinf(f(x_pt)) and not np.isnan(f(x_pt))]
-
-
-def get_area_from_keypoint(keypoint : cv2.KeyPoint): 
-    (x, y) = keypoint.pt
-    size = keypoint.size * 3
-    return (int(x - size / 2), int(y -size / 2), int(size), int(size))
 
 
 def show_final_image(pts_list, frame): 
@@ -124,7 +117,7 @@ def show_final_image(pts_list, frame):
     # Optional: 
     # Draw points excluded from monotonize func, 
     # used to calculate variance
-    (x_list, y_list) = split_tuple_list(pts_list)
+    (x_list, y_list) = fu.split_tuple_list(pts_list)
     (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
     pts_ignored = [(x, y) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
     du.draw_points(frame, pts_ignored, color=(0,0,255))
@@ -168,7 +161,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         (frame, initial_keypoint) = videoPlayer.get_initial_ball_position(detector)
         if initial_keypoint == (0,0,0,0): 
             return
-        ball_area = get_area_from_keypoint(initial_keypoint)
+        ball_area = fu.get_area_from_keypoint(initial_keypoint)
 
     ret = tracker.init(frame, ball_area)
 
@@ -237,7 +230,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(14, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(1, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
 # VIDEO State: 
 # 

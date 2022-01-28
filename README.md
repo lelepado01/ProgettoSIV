@@ -1,6 +1,6 @@
 # ProgettoSIV
 
-#### Basketball tracking
+### Basketball tracking
 The project consists in finding and tracing the position of a basketball shot from the free throw line.
 
 We chose some video of people shooting a basketball, trying to select ones with an unmoving camera and a clean background. As it turns out, not many videos online have these properties.
