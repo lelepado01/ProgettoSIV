@@ -48,7 +48,9 @@ def correct_y(x_list : list, y_list : list) -> list:
     return (x_list,y_list)
 
 
-def evaluate_shot(pts_found):
+def evaluate_shot(pts_from_tracker : PointList, pts_calculated : PointList):
+    pts_found = pts_from_tracker.getPointsAtLastFrame()
+
     (x_list, y_list) = fu.split_tuple_list(pts_found)
     (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
     
@@ -104,11 +106,11 @@ def calculate_curve(pts, extrapolate=True):
     # add (in correct order) min and max extrapolated points
     if extrapolate: 
         if x_min < x_points[0]: 
-            x_list.append(x_max)
-            x_list.insert(0, x_min)
-        else: 
             x_list.append(x_min)
             x_list.insert(0, x_max)
+        else: 
+            x_list.append(x_max)
+            x_list.insert(0, x_min)
     # use interpolate output function to calculate y value of point
     return [(int(x_pt), int(f(x_pt))) for x_pt in x_points if not np.isinf(f(x_pt)) and not np.isnan(f(x_pt))]
 
@@ -148,6 +150,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
     video_path = 'video/ft'+str(video_n) + ".mp4"
 
     pointList = PointList()
+    pointsInCalculatedCurve = PointList()
     videoPlayer = VideoPlayer(video_path)
 
     # INIZIALIZATIONS
@@ -184,15 +187,21 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
             if ret:
                 # Add current ball position to list
                 (x, y, w, h) = [int(v) for v in bbox]
-                pointList.addFrame(frameIndex, (x+w/2, y + h/2))
+                pointList.addFrame(frameIndex, (int(x+w/2), int(y + h/2)))
 
             currentFramePoints = pointList.getPointsAtFrame(frameIndex)
+            
+            calculated_curve = calculate_curve(currentFramePoints)
+            if len(calculated_curve) > 1:
+                # add last calculated point to the curve points
+                # len()-1 == extrapolated point
+                pointsInCalculatedCurve.addFrame(frameIndex, calculated_curve[len(calculated_curve)-2])
 
             if show_exec:
                 # Display area used to track ball
                 du.draw_area(frame, (x, y, w, h))
                 # Display all points from the calculated curve
-                du.draw_line(frame, calculate_curve(currentFramePoints))
+                du.draw_line(frame, calculated_curve)
                 # Display all points found by the motion tracker
                 du.draw_points(frame, currentFramePoints)
                 cv2.imshow(WINDOW_NAME, frame)        
@@ -209,7 +218,10 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
         cv2.destroyWindow(WINDOW_NAME)
 
     if show_res: 
-        evaluate_shot(currentFramePoints)
+        # add max to points
+        frameIndex += 1
+        pointsInCalculatedCurve.addFrame(frameIndex, calculated_curve[len(calculated_curve)-1])
+        evaluate_shot(pointList, pointsInCalculatedCurve)
 
         ret, frame = videoPlayer.getLastVideoFrame()
         if ret:
@@ -236,7 +248,7 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 #  execute(video, tracker, show_execution, show_result, save_result, select_area)
 
-execute(11, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(1, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
 
 # VIDEO State: 
 # 

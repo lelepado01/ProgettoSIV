@@ -19,3 +19,10 @@ class PointList:
                 break
 
         return pts_at_frame
+
+    def getPointsAtLastFrame(self): 
+        pts_at_frame = []
+        for (_, pt) in self.pointPerFrameDictionary.items(): 
+            pts_at_frame.append(pt)
+
+        return pts_at_frame

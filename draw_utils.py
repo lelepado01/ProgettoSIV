@@ -10,7 +10,7 @@ def draw_points(frame, pts_list, color = POINT_COLOR):
         cv2.circle(frame, (int(x), int(y)), 1, color, 5)
 
 def draw_line(frame, pts_list):
-    if len(pts_list) < 1: 
+    if len(pts_list) < 2: 
         return
     start = pts_list[0]
     for i in range(1, len(pts_list)): 
