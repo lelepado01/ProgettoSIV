@@ -17,9 +17,9 @@ def monotonize(xls : list, yls : list) -> list:
     dec=[(xls[0],yls[0])]
 
     for i in range(len(xls)-1):
-        if xls[i+1] > xls[i]:
+        if xls[i+1] > xls[i] and xls[i+1] >= max(inc)[0]:
             inc.append((xls[i+1], yls[i+1]))
-        elif xls[i+1] < xls[i]:
+        elif xls[i+1] < xls[i] and xls[i+1] <= min(dec)[0]:
             dec.append((xls[i+1], yls[i+1]))
     
     if len(inc)>len(dec):
