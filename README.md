@@ -33,10 +33,10 @@ TODO (devo implementare questo pezzo di algoritmo, se volete aggiungete pure alt
 
 - 1: Ball tracked, outcome classified correctly
 - 2: Ball is not found right away, the blob detector has problems identifying the ball, once it finds it, the motion tracker has problems maintaining sight, probably becouse of the bottom view of the rim.
-- 3: Ball tracked, outcome classified correctly
+- 3: Ball tracked, outcome classified incorrectly -> look into variance (maybe video too long?)
 - 4: Ball tracked, outcome classified correctly
 - 5: Ball not tracked right away, the blob detector seems to have problems, probably becouse of the different coloring of the ball passing across a background full of objects. As soon as the ball goes on top the white roof section, the blob detector is able to identify it.
-- 6 Ball tracked, outcome classified correctly 
+- 6 Ball tracked, outcome classified incorrectly (video is too short)
 - 7 Ball tracked, outcome classified correctly
 - 8 Ball is tracked as soon as it passes on top of the white background. The blob detector is probably not able to find it in front of the tree.
 - 9 Ball tracked, outcome classified incorrectly

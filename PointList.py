@@ -27,6 +27,9 @@ class PointList:
         return pts_at_frame
 
     def getFrameOfPoint(self, point): 
-        if point not in self.pointPerFrameDictionary.keys(): 
-            return None
-        return self.pointPerFrameDictionary[point]
+
+        for frame in self.pointPerFrameDictionary.keys(): 
+            if self.pointPerFrameDictionary[frame] == point: 
+                return frame
+
+        return None

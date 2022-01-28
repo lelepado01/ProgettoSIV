@@ -11,6 +11,9 @@ from VideoPlayer import VideoPlayer
 
 WINDOW_NAME = 'Frame by frame calculations'
 
+AIRBALL_THRESHOLD = 50
+SCORE_THRESHOLD = 10048000
+
 def monotonize(xls : list, yls : list) -> list:
     inc=[(xls[0],yls[0])]
     dec=[(xls[0],yls[0])]
@@ -66,19 +69,25 @@ def evaluate_shot(pts_from_tracker : PointList, pts_calculated : PointList):
     pts_ignored.reverse()
     pts_line.reverse()
 
-    start_ignored_pts_frame_index = pts_from_tracker.getFrameOfPoint(pts_ignored[0])
-    if start_ignored_pts_frame_index is None: 
-        print("Error")
-        return
+    if len(pts_ignored) == 0:
+        print("Variance not calculated, ball never changes trajectory")
+        print("Airball") # ball never changes trajectory
+        return 
 
-    hypotetical_ball_dir = pts_line[0] - pts_ignored[0] # max - point hit rim
+    # start_ignored_pts_frame_index = pts_from_tracker.getFrameOfPoint(pts_ignored[0])
+    # if start_ignored_pts_frame_index is None: 
+    #     print("Error")
+    #     return
+
+    hypotetical_ball_dir = fu.points_subtraction(pts_line[0], pts_line[1]) # max - point hit rim
     current_pt = pts_ignored[0]
     for i in range(1, len(pts_ignored)): 
-        dist = fu.distance_between_points(current_pt, pts_ignored[i]) # distance travelled from rim hit
-        hypotetical_ball_pos = hypotetical_ball_dir*dist # pos if ball didn't hit rim
+        dist = fu.points_distance(current_pt, pts_ignored[i]) # distance travelled from rim hit
+        hypotetical_ball_pos = fu.points_scalar_mult(hypotetical_ball_dir, dist) # pos if ball didn't hit rim
         total_variance += pow(current_pt[1] - hypotetical_ball_pos[1], 2) + pow(current_pt[0] - hypotetical_ball_pos[0], 2)
         current_pt = pts_ignored[i]
 
+    total_variance /= len(pts_ignored)+1
 
     # for (ptf_x, ptf_y) in pts_ignored: 
     #     for (ptl_x, ptl_y) in pts_line: 
@@ -87,9 +96,9 @@ def evaluate_shot(pts_from_tracker : PointList, pts_calculated : PointList):
     #             break
             
     print("Variance Calculated: " + str(total_variance))
-    if total_variance / (len(pts_ignored)+1) < 5: 
+    if total_variance < AIRBALL_THRESHOLD: 
         print("Airball")
-    elif total_variance / (len(pts_ignored)+1) < 33600: 
+    elif total_variance < SCORE_THRESHOLD: 
         print("Score")
     else: 
         print("Miss")
@@ -266,4 +275,4 @@ def execute(video_n, tracker_type : Tracker, show_exec = True, show_res = True, 
 # show_result: default to True, show final tajectory in the frame
 # save_results: default to True, saves identified points, their number and the final frame with trajectory in results directory (overwrites previuos executions)
 # execute(video_number, tracker_type, show_execution, show_result, save_result, select_area)
-execute(9, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
+execute(1, Tracker.CSRT, show_exec=True, show_res=True, save_res=False, select_area=False)
