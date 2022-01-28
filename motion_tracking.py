@@ -67,13 +67,20 @@ def evaluate_shot(pts_from_tracker : PointList, pts_calculated : PointList):
         print("Error")
         return
 
-    
+    hypotetical_ball_dir = pts_line[0] - pts_ignored[0] # max - point hit rim
+    current_pt = pts_ignored[0]
+    for i in range(1, len(pts_ignored)): 
+        dist = fu.distance_between_points(current_pt, pts_ignored[i]) # distance travelled from rim hit
+        hypotetical_ball_pos = hypotetical_ball_dir*dist # pos if ball didn't hit rim
+        total_variance += pow(current_pt[1] - hypotetical_ball_pos[1], 2) + pow(current_pt[0] - hypotetical_ball_pos[0], 2)
+        current_pt = pts_ignored[i]
 
-    for (ptf_x, ptf_y) in pts_ignored: 
-        for (ptl_x, ptl_y) in pts_line: 
-            if ptl_x == ptf_x: 
-                total_variance += pow(ptl_y - ptf_y, 2) + pow(ptl_x - ptf_x, 2) # calculate point variance
-                break
+
+    # for (ptf_x, ptf_y) in pts_ignored: 
+    #     for (ptl_x, ptl_y) in pts_line: 
+    #         if ptl_x == ptf_x: 
+    #             total_variance += pow(ptl_y - ptf_y, 2) + pow(ptl_x - ptf_x, 2) # calculate point variance
+    #             break
             
     print("Variance Calculated: " + str(total_variance))
     if total_variance / (len(pts_ignored)+1) < 5: 
