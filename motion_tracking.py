@@ -135,6 +135,10 @@ def show_final_image(pts_list, frame):
     # used to calculate variance
     (x_list, y_list) = fu.split_tuple_list(pts_list)
     (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
+
+    indices = [i for i, x in enumerate(pts_list) if x[0] in pts_ignored_x]
+    pts_ignored_y = [pts_list[index][1] for index in indices]
+
     pts_ignored = [(x, y) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
     du.draw_points(frame, pts_ignored, color=(0,0,255))
 
