@@ -45,8 +45,8 @@ This way we can differenciate, using two threshold, the outcome of the shot, wit
 - 9 Ball tracked, outcome classified incorrectly
 
 #### TODO
- - [ ] Custom parameters for each video (file parameter_utils.py)
+ - [x] Custom parameters for each video (file parameter_utils.py)
  - [x] calculate_curve() in motion_tracking.py sometimes catches wrong y position  
     (es. video 1)
- - [ ] Try to make work evaluate_shot() work with temporal variance
+ - [x] Try to make work evaluate_shot() work with temporal variance
  - [ ] Check for typo and bad english in explanation above

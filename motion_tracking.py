@@ -14,6 +14,10 @@ WINDOW_NAME = 'Frame by frame calculations'
 AIRBALL_THRESHOLD = 50
 SCORE_THRESHOLD = 800
 
+# Function returns a list with only coherent points for the ball movement
+# the ball can change trajectory, since it often hits the rim, 
+# however what we are interested in is plotting the trajectory, so we remove 
+# all points that don't go in the same direction (left or right)
 def monotonize(xls : list, yls : list) -> list:
     inc=[(xls[0],yls[0])]
     dec=[(xls[0],yls[0])]
@@ -24,7 +28,8 @@ def monotonize(xls : list, yls : list) -> list:
         elif xls[i+1] < xls[i] and xls[i+1] <= min(dec)[0]:
             dec.append((xls[i+1], yls[i+1]))
     
-    if len(inc)>len(dec):
+    # The direction of the trajectory will be the one the ball has travelled towards the most
+    if len(inc) > len(dec):
         return fu.split_tuple_list(inc)
     else:
         return fu.split_tuple_list(dec)
@@ -66,6 +71,7 @@ def evaluate_shot(pts_from_tracker : PointList):
 
     total_distance = 0
 
+    # reverse the list so the first point is the one where the ball hit the rim
     pts_ignored.reverse()
     pts_line.reverse()
 
@@ -76,8 +82,9 @@ def evaluate_shot(pts_from_tracker : PointList):
 
     hypotetical_ball_dir = fu.points_subtraction(pts_line[0], pts_line[1]) # max - point hit rim
     hypotetical_ball_dir = fu.points_normalize(hypotetical_ball_dir) # allows to multiply any length and get the new ball position after such length
+    
     current_pt = pts_ignored[0]
-    dist = 0
+    dist = 0 # I'm using cumulative distance, it's as if I was estimating time passed with the distance
     for i in range(1, len(pts_ignored)): 
         current_to_next_point_distance = fu.points_distance(current_pt, pts_ignored[i])
         # if the distance between two tracked points is 0, we don't want to count twice the same error
@@ -85,7 +92,7 @@ def evaluate_shot(pts_from_tracker : PointList):
             continue
         dist += current_to_next_point_distance # distance travelled from rim hit
         hypotetical_ball_pos = fu.points_scalar_mult(hypotetical_ball_dir, dist) # pos if ball didn't hit rim
-        total_distance += fu.points_distance(current_pt, hypotetical_ball_pos) 
+        total_distance += fu.points_distance(current_pt, hypotetical_ball_pos) # measure of how different the real ball trajectory is compared to the one predicted
         current_pt = pts_ignored[i]
 
     # calculate average distance over number of points, so a longer video doesn't influence the prediction
@@ -153,7 +160,7 @@ def show_final_image(pts_list, frame):
     (x_list, y_list) = fu.split_tuple_list(pts_list)
 
     (pts_ignored_x, pts_ignored_y) = get_monotonize_ignored_points(x_list, y_list)
-    pts_ignored = [(x, y) for (x, y) in zip(pts_ignored_x, pts_ignored_y)]
+    pts_ignored = zip(pts_ignored_x, pts_ignored_y)
     du.draw_points(frame, pts_ignored, color=(0,0,255))
 
     cv2.imshow(WINDOW_NAME, frame)
