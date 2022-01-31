@@ -47,4 +47,4 @@ A short recap of the results achieved in our project can be found in the next li
 - 6 Ball tracked, outcome classified incorrectly (video is too short)
 - 7 Ball tracked, outcome classified correctly
 - 8 Ball is tracked as soon as it passes on top of the white background. The blob detector is probably not able to find it in front of the tree. Outcome classified correctly
-- 9 Ball tracked, outcome classified incorrectly
+- 9 Ball tracked, outcome classified correctly
