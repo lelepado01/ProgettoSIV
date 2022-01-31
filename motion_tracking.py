@@ -110,13 +110,17 @@ def evaluate_shot(pts_from_tracker : PointList):
 def calculate_curve(pts, extrapolate=True): 
     # divide x and y lists    
     (x_list, y_list) = fu.split_tuple_list(pts)
+    
+    # At least 3 points are needed for interp1d()
+    # Not done before becouse monotonize removes some points 
+    if len(x_list) < 3 or len(y_list) < 3: 
+        return []
     # monotonize x axis
     (x_list,y_list) = monotonize(x_list, y_list)
     # monotonize y axis
     (x_list,y_list) = correct_y(x_list,y_list)
 
-    # At least 3 points are needed for interp1d()
-    # Not done before becouse monotonize removes some points 
+    # need to double check length because of correction
     if len(x_list) < 3 or len(y_list) < 3: 
         return []
 
@@ -136,18 +140,21 @@ def calculate_curve(pts, extrapolate=True):
     x_points = x_list 
     # add (in correct order) min and max extrapolated points
     if extrapolate: 
-        if x_points[0] < x_points[len(x_points)-1]: 
-            x_list.append(x_max)
-            x_list.insert(0, x_min)
+        try:
+            if x_points[0] < x_points[len(x_points)-1]: 
+                x_list.append(x_max)
+                x_list.insert(0, x_min)
 
-            y_list.append(int(f(x_max)))
-            y_list.insert(0, int(f(x_min)))
-        else: 
-            x_list.append(x_min)
-            x_list.insert(0, x_max)
+                y_list.append(int(f(x_max)))
+                y_list.insert(0, int(f(x_min)))
+            else: 
+                x_list.append(x_min)
+                x_list.insert(0, x_max)
 
-            y_list.append(int(f(x_min)))
-            y_list.insert(0, int(f(x_max)))
+                y_list.append(int(f(x_min)))
+                y_list.insert(0, int(f(x_max)))
+        except:
+            print("Infinity value exception, skipping for this iteration")
 
     return [(int(x), int(y)) for x,y in zip(x_list, y_list)]
 

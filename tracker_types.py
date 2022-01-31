@@ -1,7 +1,3 @@
-
-import enum
-
-
 import enum
 import cv2
 
@@ -11,7 +7,6 @@ class Tracker(enum.Enum):
     KCF = 2,
     TLD = 3,
     MedianFlow = 4,
-    GOTURN = 5,
     MOSSE = 6,
     CSRT = 7,
 
@@ -27,8 +22,6 @@ class Tracker(enum.Enum):
             return cv2.legacy.TrackerTLD_create()
         elif tracker_type == Tracker.MedianFlow:
             return cv2.legacy.TrackerMedianFlow_create()
-        elif tracker_type == Tracker.GOTURN:
-            return cv2.legacy.TrackerGOTURN_create()
         elif tracker_type == Tracker.MOSSE:
             return cv2.legacy.TrackerMOSSE_create()
         #elif tracker_type == Tracker.CSRT:
@@ -46,8 +39,6 @@ class Tracker(enum.Enum):
             return "Tracker.TLD"
         elif tracker_type == Tracker.MedianFlow:
             return "Tracker.MedianFlow"
-        elif tracker_type == Tracker.GOTURN:
-            return "Tracker.GOTURN"
         elif tracker_type == Tracker.MOSSE:
             return "Tracker.MOSSE"
         #elif tracker_type == Tracker.CSRT:
